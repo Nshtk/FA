@@ -92,22 +92,7 @@ public:
             free(vars_and_their_pows[i]);
         free(vars_and_their_pows);
     }
-/*
-    int isEmpty()
-    {
-        if(this==nullptr)
-            return 1;
-        else
-            return 0;
-    }
-    int isEmpty() const
-    {
-        if(this==nullptr)
-            return 1;
-        else
-            return 0;
-    }
-*/
+
     Monome operator+(Monome monome);
     Monome operator+=(Monome monome);
     Monome operator-(Monome monome);
@@ -139,10 +124,6 @@ Monome Monome::operator+(Monome monome)
             break;
         }
     }
-    /*if(not_equal)
-    {
-        throw "Monomes are not equal.";
-    }*/
 
     Monome result(*this);
     if(not_equal)
@@ -718,37 +699,6 @@ ostream& operator<<(ostream &out, const Polynome *polynome)
 
 istream& operator>> (istream &in, Polynome &polynome)
 {
-    /*char str[128], buf[64], c;
-
-    int str_not_empty=1, i;
-
-    for(i=0; !in.eof() && c!='\n'; i++)
-    {
-        in.get(c);
-        str[i]=c;
-        if(c==' ')
-        {
-            in.get(c);
-            if(c==' ')
-            {
-                break;
-            }
-            str[++i]=c;
-            in.get(c);
-            str[++i]=c;
-        }
-    }
-    if(str[i-1]=='\n')
-        str[i-1]='\0';
-    else
-        str[i]='\0';
-
-    char *addr=str;
-    while(str_not_empty)
-    {
-        str_not_empty=polynome.readStr(&addr, buf);
-        polynome.container.emplace_back(Monome(buf));
-    }*/
     Monome monome;
     char c;
     while(in.get(c))
@@ -853,26 +803,6 @@ string isHarmonic(Polynome polynome)
         return "TRUE";
 
     return "FALSE";
-    /*for (Monome &characters_in_monome : polynome.container)
-    {
-        for (i = 0; i < ALPHABET_SIZE; i++)
-        {
-            if (characters_in_monome.vars_and_their_pows[i][0]!=0)
-            {
-                for (Monome &monome : polynome.container)
-                {
-                    for (j = 0; j < ALPHABET_SIZE; j++)
-                    {
-                        if (monome.vars_and_their_pows[j][0] != 0)
-                        {
-                            temp = monome / monome.vars_and_their_pows[j][0];
-                            temp /= monome.vars_and_their_pows[j][0];
-                        }
-                    }
-                }
-            }
-        }
-    }*/
 }
 
 Polynome *fillPolynome(ifstream &fp)
