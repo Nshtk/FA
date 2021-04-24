@@ -21,13 +21,13 @@ private:
     int size;
 
 public:
-    Matrix(int number) : size(number)
+    Matrix(int number) : size(number)									\\Констурктор обычный int
     {
         ptr=new double*[size];
         for(int i=0; i<size; i++)
             ptr[i]=new double[size];
     }
-    Matrix(const Matrix &matrix) : Matrix(matrix.size)
+    Matrix(const Matrix &matrix) : Matrix(matrix.size)					 \\Констурктор копий
     {
         for(int i=0; i<size; i++)
             for(int j=0; j<size; j++)
@@ -40,7 +40,7 @@ public:
         delete[] ptr;
     }
 
-    void printDetMatrix(ostream &out)
+    void printDetMatrix(ostream &out)									 \\Метод для вывода матрицы в формате TeX
     {
         out << "\\begin{bmatrix}\n";
         int n=size-1;
@@ -53,7 +53,7 @@ public:
         out << "\\end{bmatrix}\n";
     }
 
-    int isEmpty()
+    int isEmpty()														 \\Метод для проверки на nullptr, используемый при обработке вектора матриц (выражения с матрицами)
     {
         if(this==nullptr)
             return 1;
@@ -169,7 +169,7 @@ ostream& operator<<(ostream &out, const Matrix *matrix)
     out << "\\end{pmatrix}\n";
     return out;
 }
-istream& operator>>(istream &in, const Matrix &matrix)
+istream& operator>>(istream &in, const Matrix &matrix)			   \\Перегруженный оператор для заполнения матрицы только из входного потока пользователя
 {
     for(int i=0; i<matrix.size; i++)
         for(int j=0; j<matrix.size; j++)
@@ -178,7 +178,7 @@ istream& operator>>(istream &in, const Matrix &matrix)
     return in;
 }
 
-Matrix *fillMatrix(ifstream &fp)
+Matrix *fillMatrix(ifstream &fp)									\\Функция для заполнения матрицы из файла
 {
     int i, j, number, end_of_matrix=0;
     char c;
@@ -351,7 +351,7 @@ Matrix calcExpo(Matrix matrix, int N)
     return matrix;
 }
 
-void calculateExpression(Matrix &A, Matrix &B, string operation, ofstream &fp)
+void calculateExpression(Matrix &A, Matrix &B, string operation, ofstream &fp)		\\Функция для обработки выражения с матрицами и записи результата в выходной файл
 {
     string res_of_cmp;
     try

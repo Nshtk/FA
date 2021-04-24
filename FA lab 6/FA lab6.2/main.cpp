@@ -14,7 +14,7 @@
 
 using namespace std;
 
-int strToInt(char *str, char *buf, int *i)
+int strToInt(char *str, char *buf, int *i)                  \\Функция для обработки чисел во входной строке
 {
     int add_minus=1;
 
@@ -370,7 +370,7 @@ class Polynome : public TeX_convertible
     public:
         Polynome()
         {}
-        Polynome(char* str)
+        Polynome(char* str)                             \\Конструктор обычный char*
         {
             int str_not_empty=1;
             char *buf=(char*)malloc(64);
@@ -382,16 +382,20 @@ class Polynome : public TeX_convertible
             }
             free(buf);
         }
+        Polynome(const Polynome &polynome)               \\Конструктор копий
+        {
+            container=polynome.container;
+        }
         ~Polynome()
         {
             container.clear();
         }
 
-        int getCoef(const Monome &monome) const
+        int getCoef(const Monome &monome) const          \\Метод для получения коэффициента монома
         {
             return monome.coef;
         }
-        int isNULL()
+        int isNULL()                                     \\Метод для проверки на nullptr, используемый при обработке вектора полиномов (выражения с полиномами)
         {
             if(this==nullptr)
                 return 1;
@@ -419,7 +423,7 @@ class Polynome : public TeX_convertible
     friend string isHarmonic (Polynome polynome);
 };
 
-int cleanAndEmptyCheck(Polynome *polynome)
+int cleanAndEmptyCheck(Polynome *polynome)                \\Очистка контейнера с мономами от мономов с коэффициентом 0 и проверка полинома на пустоту
 {
     Polynome temp;
     int not_empty;
@@ -813,7 +817,7 @@ Polynome *fillPolynome(ifstream &fp)
     return polynome;
 }
 
-void calculateExpression(Polynome &A, Polynome &B, char operation[2], ofstream &fp)
+void calculateExpression(Polynome &A, Polynome &B, char operation[2], ofstream &fp)     \\Функция для обработки выражения с полиномами и записи результата в выходной файл
 {
     string bool_res;
     try
