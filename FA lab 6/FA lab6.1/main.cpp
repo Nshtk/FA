@@ -186,7 +186,7 @@ bool Matrix::operator==(Matrix const &matrix)
     for(int i=0; i<size; i++)
         for(int j=0; j<size; j++)
         {
-            temp=abs(ptr[i][j] - matrix.ptr[i][j]);
+            temp=fabs(ptr[i][j] - matrix.ptr[i][j]);
             if(temp > EPS)
                 return false;
         }
@@ -199,7 +199,7 @@ bool Matrix::operator!=(Matrix const &matrix)
         for(int j=0; j<size; j++)
             for(int j=0; j<size; j++)
             {
-                temp= abs(ptr[i][j] - matrix.ptr[i][j]);
+                temp=fabs(ptr[i][j] - matrix.ptr[i][j]);
                 if(temp > EPS)
                     return true;
             }
@@ -384,7 +384,7 @@ Matrix calcAdj(Matrix &matrix)
 Matrix calcInverse(Matrix &matrix)
 {
     double det=calcDet(matrix);
-    if (det==0)
+    if (fabs(det) < EPS)
         throw "Singular matrix, unable to find inverse matrix.";
 
     int size=matrix.size;
