@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <fstream>
 #include <vector>
+#include <sstream>
+#include <string>
 
 #define ALPHABET_SIZE 27
 #define NOT_VALID_RESULT INT_MIN
@@ -41,6 +43,7 @@ class Polynome;
 class TeX_convertible
 {
 public:
+    virtual string convert() const {}
 };
 
 class Monome : public TeX_convertible
@@ -93,27 +96,48 @@ public:
         free(vars_and_their_pows);
     }
 
-    Monome operator+(Monome monome);
-    Monome operator+=(Monome monome);
-    Monome operator-(Monome monome);
-    Monome operator-=(Monome monome);
-    Monome operator*(Monome monome);
-    Monome operator*=(Monome monome);
+    string convert() const override
+    {
+        stringstream out;
+
+        if(coef>0)
+            out << '+' << coef;
+        else
+            out << coef;
+
+        for (int i = 0; i < ALPHABET_SIZE; i++)
+        {
+            if(vars_and_their_pows[i][0]>0)
+                out << vars_and_their_pows[i][0];
+            if(vars_and_their_pows[i][1]!=1 && vars_and_their_pows[i][1]!=0)
+                out << '^' << +vars_and_their_pows[i][1];
+        }
+
+        string out_s=out.str();
+        return out_s;
+    }
+
+    Monome operator+(Monome &monome);
+    Monome operator+=(Monome &monome);
+    Monome operator-(Monome &monome);
+    Monome operator-=(Monome &monome);
+    Monome operator*(Monome &monome);
+    Monome operator*=(Monome &monome);
     Monome operator/(char var);
     Monome operator/=(char var);
-    string operator==(const Monome& monome);
-    string operator!=(const Monome& monome);
+    bool operator==(const Monome& monome);
+    bool operator!=(const Monome& monome);
     Monome operator=(const Monome& monome);
     friend ostream& operator<< (ostream &out, const Monome &monome);
     friend ostream& operator<< (ostream &out, const Monome *monome);
     friend istream& operator>> (istream &in, Monome &monome);
     friend class Polynome;
     friend int cleanAndEmptyCheck(Polynome *polynome);
-    friend string isHomogeneous (const Polynome &polynome);
-    friend string isHarmonic (Polynome polynome);
+    friend bool isHomogeneous (const Polynome &polynome);
+    friend bool isHarmonic (Polynome polynome);
 };
 
-Monome Monome::operator+(Monome monome)
+Monome Monome::operator+(Monome &monome)
 {
     int not_equal=0;
     for(int i=0; i<ALPHABET_SIZE; i++)
@@ -133,7 +157,7 @@ Monome Monome::operator+(Monome monome)
     return result;
 }
 
-Monome Monome::operator+=(Monome monome)
+Monome Monome::operator+=(Monome &monome)
 {
     int not_equal=0;
     for(int i=0; i<ALPHABET_SIZE; i++)
@@ -149,10 +173,11 @@ Monome Monome::operator+=(Monome monome)
         coef=NOT_VALID_RESULT;
     else
         coef+=monome.coef;
+
     return *this;
 }
 
-Monome Monome::operator-(Monome monome)
+Monome Monome::operator-(Monome &monome)
 {
     int not_equal=0;
     for(int i=0; i<ALPHABET_SIZE; i++)
@@ -172,7 +197,7 @@ Monome Monome::operator-(Monome monome)
     return result;
 }
 
-Monome Monome::operator-=(Monome monome)
+Monome Monome::operator-=(Monome &monome)
 {
     int not_equal=0;
     for(int i=0; i<ALPHABET_SIZE; i++)
@@ -191,7 +216,7 @@ Monome Monome::operator-=(Monome monome)
     return *this;
 }
 
-Monome Monome::operator*(Monome monome)
+Monome Monome::operator*(Monome &monome)
 {
     Monome result(*this);
 
@@ -212,7 +237,7 @@ Monome Monome::operator*(Monome monome)
     return result;
 }
 
-Monome Monome::operator*=(Monome monome)
+Monome Monome::operator*=(Monome &monome)
 {
     for(int i=0; i<ALPHABET_SIZE; i++)
     {
@@ -256,29 +281,29 @@ Monome Monome::operator/=(char var)
     return *this;
 }
 
-string Monome::operator==(const Monome& monome)
+bool Monome::operator==(const Monome& monome)
 {
     if(coef!=monome.coef)
-        return "FALSE";
+        return true;
     for(int i=0; i<ALPHABET_SIZE; i++)
     {
         if(vars_and_their_pows[i][0]!=monome.vars_and_their_pows[i][0] || vars_and_their_pows[i][1]!=monome.vars_and_their_pows[i][1])
-            return "FALSE";
+            return false;
     }
 
-    return "TRUE";
+    return true;
 }
 
-string Monome::operator!=(const Monome& monome)
+bool Monome::operator!=(const Monome& monome)
 {
     if(coef!=monome.coef)
-        return "TRUE";
+        return true;
     for(int i=0; i<ALPHABET_SIZE; i++)
     {
         if(vars_and_their_pows[i][0]!=monome.vars_and_their_pows[i][0] || vars_and_their_pows[i][1]!=monome.vars_and_their_pows[i][1])
-            return "TRUE";
+            return true;
     }
-    return "FALSE";
+    return false;
 }
 
 Monome Monome::operator=(const Monome& monome)
@@ -349,78 +374,92 @@ istream& operator>> (istream &in, Monome &monome)
 
 class Polynome : public TeX_convertible
 {
-    private:
-        list<Monome> container;
+private:
+    list<Monome> container;
 
-        int readStr(char **str, char *buf)
+    int readStr(char **str, char *buf)
+    {
+        for(; (**str)>39; (*str)++, buf++)
         {
-            for(; (**str)>39; (*str)++, buf++)
-            {
-                *buf=**str;
-            }
-            *buf='\0';
+            *buf=**str;
+        }
+        *buf='\0';
 
-            if(**str=='\0')
-                return 0;
+        if(**str=='\0')
+            return 0;
 
-            (*str)+=3;
+        (*str)+=3;
+        return 1;
+    }
+
+public:
+    Polynome() = default;                           //Конструктор для пустого полинома
+    Polynome(char* str)                             //Конструктор обычный char*
+    {
+        int str_not_empty=1;
+        char *buf=(char*)malloc(64);
+
+        while(str_not_empty)
+        {
+            str_not_empty=readStr(&str, buf);
+            container.emplace_back(Monome(buf));
+        }
+        free(buf);
+    }
+    Polynome(const Polynome &polynome)               //Конструктор копий
+    {
+        container=polynome.container;
+    }
+    ~Polynome()
+    {
+        container.clear();
+    }
+
+    int getCoef(const Monome &monome) const          //Метод для получения коэффициента монома
+    {
+        return monome.coef;
+    }
+    int isNULL()                                     //Метод для проверки на nullptr, используемый при обработке вектора полиномов (выражения с полиномами)
+    {
+        if(this==nullptr)
             return 1;
-        }
+        else
+            return 0;
+    }
 
-    public:
-        Polynome()
-        {}
-        Polynome(char* str)                             //Конструктор обычный char*
-        {
-            int str_not_empty=1;
-            char *buf=(char*)malloc(64);
+    string convert() const override
+    {
+        stringstream out;
 
-            while(str_not_empty)
-            {
-                str_not_empty=readStr(&str, buf);
-                container.emplace_back(Monome(buf));
-            }
-            free(buf);
-        }
-        Polynome(const Polynome &polynome)               //Конструктор копий
+        out << '(';
+        for(const Monome &monome : container)
         {
-            container=polynome.container;
+            out << monome.convert() << ' ';
         }
-        ~Polynome()
-        {
-            container.clear();
-        }
+        out << ')';
 
-        int getCoef(const Monome &monome) const          //Метод для получения коэффициента монома
-        {
-            return monome.coef;
-        }
-        int isNULL()                                     //Метод для проверки на nullptr, используемый при обработке вектора полиномов (выражения с полиномами)
-        {
-            if(this==nullptr)
-                return 1;
-            else
-                return 0;
-        }
+        string out_s=out.str();
+        return out_s;
+    }
 
-    Polynome operator+(Polynome polynome);
-    Polynome operator+=(Polynome polynome);
-    Polynome operator-(Polynome polynome);
-    Polynome operator-=(Polynome polynome);
-    Polynome operator*(Polynome polynome);
-    Polynome operator*=(Polynome polynome);
+    Polynome operator+(Polynome &polynome);
+    Polynome operator+=(Polynome &polynome);
+    Polynome operator-(Polynome &polynome);
+    Polynome operator-=(Polynome &polynome);
+    Polynome operator*(Polynome &polynome);
+    Polynome operator*=(Polynome &polynome);
     Polynome operator/(char var);
     Polynome operator/=(char var);
-    string operator==(const Polynome &polynome);
-    string operator!=(const Polynome &polynome);
+    bool operator==(const Polynome &polynome);
+    bool operator!=(const Polynome &polynome);
     Polynome operator=(const Polynome &polynome);
     friend ostream& operator<< (ostream &out, const Polynome &polynome);
     friend ostream& operator<< (ostream &out, const Polynome *polynome);
     friend istream& operator>> (istream &in, Polynome &polynome);
     friend istream& operator>> (istream &in, Polynome &polynome);
     friend int cleanAndEmptyCheck(Polynome *polynome);
-    friend string isHomogeneous (const Polynome &polynome);
-    friend string isHarmonic (Polynome polynome);
+    friend bool isHomogeneous (const Polynome &polynome);
+    friend bool isHarmonic (Polynome polynome);
 };
 
 int cleanAndEmptyCheck(Polynome *polynome)                //Очистка контейнера с мономами от мономов с коэффициентом 0 и проверка полинома на пустоту
@@ -445,7 +484,7 @@ int cleanAndEmptyCheck(Polynome *polynome)                //Очистка ко�
     return not_empty;
 }
 
-Polynome Polynome::operator+(Polynome polynome)
+Polynome Polynome::operator+(Polynome &polynome)
 {
     Polynome result=*this;
     Monome temp;
@@ -465,16 +504,14 @@ Polynome Polynome::operator+(Polynome polynome)
             }
         }
         if(monome_not_utilised)
-        {
             result.container.emplace_back(monome_b);
-        }
     }
 
     cleanAndEmptyCheck(&result);
     return result;
 }
 
-Polynome Polynome::operator+=(Polynome polynome)
+Polynome Polynome::operator+=(Polynome &polynome)
 {
     Monome temp;
     int monome_not_utilised;
@@ -502,7 +539,7 @@ Polynome Polynome::operator+=(Polynome polynome)
     return *this;
 }
 
-Polynome Polynome::operator-(Polynome polynome)
+Polynome Polynome::operator-(Polynome &polynome)
 {
     Polynome result=*this;
     Monome temp;
@@ -532,7 +569,7 @@ Polynome Polynome::operator-(Polynome polynome)
     return result;
 }
 
-Polynome Polynome::operator-=(Polynome polynome)
+Polynome Polynome::operator-=(Polynome &polynome)
 {
     Monome temp;
     int monome_not_utilised;
@@ -561,7 +598,7 @@ Polynome Polynome::operator-=(Polynome polynome)
     return *this;
 }
 
-Polynome Polynome::operator*(Polynome polynome)
+Polynome Polynome::operator*(Polynome &polynome)
 {
     Polynome result;
 
@@ -576,7 +613,7 @@ Polynome Polynome::operator*(Polynome polynome)
     return result;
 }
 
-Polynome Polynome::operator*=(Polynome polynome)
+Polynome Polynome::operator*=(Polynome &polynome)
 {
     Polynome result;
 
@@ -615,50 +652,48 @@ Polynome Polynome::operator/=(char var)
     return *this;
 }
 
-string Polynome::operator==(const Polynome& polynome)
+bool Polynome::operator==(const Polynome& polynome)
 {
     int equal;
-    string t="TRUE";
 
     for(Monome monome_b : polynome.container)
     {
         equal=0;
         for(Monome &monome_a : container)
         {
-            if((monome_b==monome_a)==t)
+            if(monome_b==monome_a)
             {
                 equal = 1;
                 break;
             }
         }
         if(!equal)
-            return "FALSE";
+            return false;
     }
 
-    return t;
+    return true;
 }
 
-string Polynome::operator!=(const Polynome& polynome)
+bool Polynome::operator!=(const Polynome& polynome)
 {
     int equal;
-    string t="TRUE";
 
     for(Monome monome_b : polynome.container)
     {
         equal=0;
         for(Monome &monome_a : container)
         {
-            if((monome_b==monome_a)==t)
+            if(monome_b==monome_a)
             {
                 equal = 1;
                 break;
             }
         }
         if(!equal)
-            return t;
+            return true;
     }
 
-    return "FALSE";
+    return false;
 }
 
 Polynome Polynome::operator=(const Polynome& polynome)
@@ -672,7 +707,7 @@ Polynome Polynome::operator=(const Polynome& polynome)
     return *this;
 }
 
-ostream& operator<<(ostream &out, const Polynome &polynome)
+ostream& operator<< (ostream &out, const Polynome &polynome)
 {
     out << '(';
     for(const Monome &monome : polynome.container)
@@ -686,7 +721,7 @@ ostream& operator<<(ostream &out, const Polynome &polynome)
 
     return out;
 }
-ostream& operator<<(ostream &out, const Polynome *polynome)
+ostream& operator<< (ostream &out, const Polynome *polynome)
 {
     out << '(';
     for(const Monome &monome : polynome->container)
@@ -721,7 +756,7 @@ istream& operator>> (istream &in, Polynome &polynome)
     }
 }
 
-string isHomogeneous(const Polynome &polynome)
+bool isHomogeneous(const Polynome &polynome)
 {
     int sum, sum_prev=0, i;
 
@@ -737,16 +772,16 @@ string isHomogeneous(const Polynome &polynome)
         {
             if(sum!=sum_prev)
             {
-                return "FALSE";
+                return false;
             }
         }
         else
             sum_prev=sum;
     }
-    return "TRUE";
+    return true;
 }
 
-string isHarmonic(Polynome polynome)
+bool isHarmonic(Polynome polynome)
 {
     vector<Polynome> derivatives;
     Polynome temp_pol;
@@ -799,14 +834,12 @@ string isHarmonic(Polynome polynome)
 
     length=derivatives.size();
     for(i=0; i<length; i++)
-    {
         temp_pol+=derivatives[i];
-    }
 
     if(cleanAndEmptyCheck(&temp_pol)==0)
-        return "TRUE";
+        return true;
 
-    return "FALSE";
+    return false;
 }
 
 Polynome *fillPolynome(ifstream &fp)
@@ -817,9 +850,8 @@ Polynome *fillPolynome(ifstream &fp)
     return polynome;
 }
 
-void calculateExpression(Polynome &A, Polynome &B, char operation[2], ofstream &fp)     //Функция для обработки выражения с полиномами и записи результата в выходной файл
+void calculateExpression(Polynome &A, Polynome &B, string operation, ofstream &fp)     //Функция для обработки выражения с полиномами и записи результата в выходной файл
 {
-    string bool_res;
     try
     {
         if (!B.isNULL())
@@ -827,21 +859,19 @@ void calculateExpression(Polynome &A, Polynome &B, char operation[2], ofstream &
             switch (operation[0])
             {
                 case '+':
-                    fp << A << " + " << B << " = " << A + B;
+                    fp << A.convert() << " + " << B.convert() << " = " << (A + B).convert();
                     break;
                 case '-':
-                    fp << A << " - " << B << " = " << A - B;
+                    fp << A.convert() << " - " << B.convert() << " = " << (A - B).convert();
                     break;
                 case '*':
-                    fp << A << " * " << B << " = " << A * B;
+                    fp << A.convert() << " * " << B.convert() << " = " << (A * B).convert();
                     break;
                 case '=':
-                    bool_res = A==B;
-                    fp << A << " == " << B << " = " << bool_res;
+                    fp << A.convert() << " == " << B.convert() << " = " << boolalpha << (A==B);
                     break;
                 case '!':
-                    bool_res = A!=B;
-                    fp << A << " != " << B << " = " << bool_res;
+                    fp << A.convert() << " != " << B.convert() << " = " << boolalpha << (A!=B);
                     break;
             }
         }
@@ -850,15 +880,13 @@ void calculateExpression(Polynome &A, Polynome &B, char operation[2], ofstream &
             switch (operation[0])
             {
                 case 'h':
-                    bool_res=isHomogeneous(A);
-                    fp << A << " is Homogeneous" << " = " << bool_res;
+                    fp << A.convert() << " is Homogeneous" << " = " << boolalpha << isHomogeneous(A);
                     break;
                 case 'g':
-                    bool_res=isHarmonic(A);
-                    fp << A << " is Harmonic" << " = " << bool_res;
+                    fp << A.convert() << " is Harmonic" << " = " << boolalpha << isHarmonic(A);
                     break;
                 case '/':
-                    fp << A << " / " << operation[1] << " = " << A / operation[1];
+                    fp << A.convert() << " / " << operation[1] << " = " << (A / operation[1]).convert();
                     break;
             }
         }
@@ -883,7 +911,7 @@ int main()
         cout<<"Failed to open output file.";
 
     vector<Polynome*> p_array;
-    char operation[2];
+    string operation;
 
     try
     {
@@ -891,22 +919,12 @@ int main()
         {
             p_array.push_back(fillPolynome(ifp));
 
-            ifp >> operation[0];
+            ifp >> operation;
 
-            if (operation[0] == 'h' || operation[0] == 'g')
-            {
+            if(ifp.get()=='\n')
                 p_array.push_back(nullptr);
-                ifp.get();
-            }
-            else if(operation[0]=='/')
-            {
-                p_array.push_back(nullptr);
-                ifp >> operation[1];
-                ifp.get();
-            }
             else
             {
-                ifp.get();
                 ifp.get();
                 p_array.push_back(fillPolynome(ifp));
             }
@@ -916,10 +934,8 @@ int main()
             p_array.pop_back();
             p_array.pop_back();
 
-            ifp.get();
-            if(ifp.eof())
+            if(ifp.peek()==EOF)
                 break;
-            ifp.unget();
         }
     }
     catch(const char *exc)
@@ -932,5 +948,3 @@ int main()
 
     return 0;
 }
-
-#pragma clang diagnostic pop
