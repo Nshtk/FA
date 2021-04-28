@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cstring>
 #include <list>
-#include <iterator>
 #include <algorithm>
 #include <fstream>
 #include <vector>
@@ -53,12 +52,11 @@ private:
     int coef;
 
 public:
-    Monome()
+    Monome() : coef(1)
     {
         vars_and_their_pows=(char**)malloc(ALPHABET_SIZE*sizeof(char*));
         for(int i=0; i<ALPHABET_SIZE; i++)
             vars_and_their_pows[i]=(char*)calloc(2, sizeof(char));
-        coef=1;
     }
     Monome(char *str) : Monome()
     {
@@ -418,13 +416,6 @@ public:
     int getCoef(const Monome &monome) const          //Метод для получения коэффициента монома
     {
         return monome.coef;
-    }
-    int isNULL()                                     //Метод для проверки на nullptr, используемый при обработке вектора полиномов (выражения с полиномами)
-    {
-        if(this==nullptr)
-            return 1;
-        else
-            return 0;
     }
 
     string convert() const override
@@ -842,53 +833,56 @@ bool isHarmonic(Polynome polynome)
     return false;
 }
 
-Polynome *fillPolynome(ifstream &fp)
+Polynome fillPolynome(ifstream &fp)
 {
-    Polynome *polynome = new Polynome;
-    fp >> *polynome;
+    Polynome polynome;
+    fp >> polynome;
 
     return polynome;
 }
 
-void calculateExpression(Polynome &A, Polynome &B, string operation, ofstream &fp)     //Функция для обработки выражения с полиномами и записи результата в выходной файл
+void calculateExpression(vector<Polynome> &operands, string operation, ofstream &fp)     //Функция для обработки выражения с полиномами и записи результата в выходной файл
 {
     try
     {
-        if (!B.isNULL())
+        if (operands.size()>1)
         {
             switch (operation[0])
             {
                 case '+':
-                    fp << A.convert() << " + " << B.convert() << " = " << (A + B).convert();
+                    fp << operands[0].convert() << " + " << operands[1].convert() << " = " << (operands[0] + operands[1]).convert();
                     break;
                 case '-':
-                    fp << A.convert() << " - " << B.convert() << " = " << (A - B).convert();
+                    fp << operands[0].convert() << " - " << operands[1].convert() << " = " << (operands[0] - operands[1]).convert();
                     break;
                 case '*':
-                    fp << A.convert() << " * " << B.convert() << " = " << (A * B).convert();
+                    fp << operands[0].convert() << " * " << operands[1].convert() << " = " << (operands[0] * operands[1]).convert();
                     break;
                 case '=':
-                    fp << A.convert() << " == " << B.convert() << " = " << boolalpha << (A==B);
+                    fp << operands[0].convert() << " == " << operands[1].convert() << " = " << boolalpha << (operands[0]==operands[1]);
                     break;
                 case '!':
-                    fp << A.convert() << " != " << B.convert() << " = " << boolalpha << (A!=B);
+                    fp << operands[0].convert() << " != " << operands[1].convert() << " = " << boolalpha << (operands[0]!=operands[1]);
                     break;
             }
+            operands.pop_back();
+            operands.pop_back();
         }
         else
         {
             switch (operation[0])
             {
                 case 'h':
-                    fp << A.convert() << " is Homogeneous" << " = " << boolalpha << isHomogeneous(A);
+                    fp << operands[0].convert() << " is Homogeneous" << " = " << boolalpha << isHomogeneous(operands[0]);
                     break;
                 case 'g':
-                    fp << A.convert() << " is Harmonic" << " = " << boolalpha << isHarmonic(A);
+                    fp << operands[0].convert() << " is Harmonic" << " = " << boolalpha << isHarmonic(operands[0]);
                     break;
                 case '/':
-                    fp << A.convert() << " / " << operation[1] << " = " << (A / operation[1]).convert();
+                    fp << operands[0].convert() << " / " << operation[1] << " = " << (operands[0] / operation[1]).convert();
                     break;
             }
+            operands.pop_back();
         }
         fp << " \\\\";
     }
@@ -910,29 +904,24 @@ int main()
     if(!ofp.is_open())
         cout<<"Failed to open output file.";
 
-    vector<Polynome*> p_array;
+    vector<Polynome> operands;
     string operation;
 
     try
     {
         while (true)
         {
-            p_array.push_back(fillPolynome(ifp));
+            operands.push_back(fillPolynome(ifp));
 
             ifp >> operation;
 
-            if(ifp.get()=='\n')
-                p_array.push_back(nullptr);
-            else
+            if(ifp.get()!='\n')
             {
                 ifp.get();
-                p_array.push_back(fillPolynome(ifp));
+                operands.push_back(fillPolynome(ifp));
             }
 
-            calculateExpression(*p_array[0], *p_array[1], operation, ofp);
-
-            p_array.pop_back();
-            p_array.pop_back();
+            calculateExpression(operands, operation, ofp);
 
             if(ifp.peek()==EOF)
                 break;
