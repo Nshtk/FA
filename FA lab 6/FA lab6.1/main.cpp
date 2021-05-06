@@ -5,18 +5,22 @@
 #include <string>
 #include <iomanip>
 #include <sstream>
+#include <cassert>
 
 #define EPS 0.000001
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "EndlessLoop"
-
 using namespace std;
+
+typedef struct Indexes                                                          // Структура для передачи в индексатор
+{
+    unsigned int row, col;
+    Indexes (unsigned int i, unsigned int j) : row(i), col(j) {}
+} Indexes;
 
 class TeX_convertible
 {
 public:
-    virtual string convert() const {}
+    virtual string convert() const =0;
 };
 
 class Matrix : public TeX_convertible
@@ -26,13 +30,13 @@ private:
     int size;
 
 public:
-    Matrix(int number) : size(number)									//Констурктор обычный int
+    explicit Matrix(int number) : size(number)									// Констурктор обычный int
     {
         ptr=new double*[size];
         for(int i=0; i<size; i++)
             ptr[i]=new double[size];
     }
-    Matrix(const Matrix &matrix) : Matrix(matrix.size)					 //Констурктор копий
+    Matrix(const Matrix &matrix) : Matrix(matrix.size)					        // Констурктор копий
     {
         for(int i=0; i<size; i++)
             for(int j=0; j<size; j++)
@@ -54,7 +58,10 @@ public:
         for(int i=0; i<size; i++)
         {
             for (int j = 0; j < size; j++)
-                (j==n)? out << fixed << setprecision(2) << ptr[i][j] << "\\\\" : out << fixed << setprecision(2) << ptr[i][j] << " & ";
+            {
+                out << fixed << setprecision(2) << ptr[i][j];
+                (j==n)? out << "\\\\" : out  << " & ";
+            }
             out << '\n';
         }
         out << "\\end{pmatrix}\n";
@@ -63,91 +70,60 @@ public:
         return out_s;
     }
 
-    double* operator[](int index);
-    Matrix operator+(Matrix &matrix);
-    Matrix operator+=(Matrix &matrix);
-    Matrix operator-(Matrix &matrix);
-    Matrix operator-=(Matrix &matrix);
-    Matrix operator*(Matrix &matrix);
-    Matrix operator*=(Matrix matrix);
+    double& operator[](Indexes &indexes);
+    Matrix operator+(Matrix const &matrix);
+    Matrix &operator+=(Matrix const &matrix);
+    Matrix operator-(Matrix const &matrix);
+    Matrix &operator-=(Matrix const &matrix);
+    Matrix operator*(Matrix const &matrix);
+    Matrix &operator*=(Matrix const &matrix);
     Matrix operator*(double number);
     bool operator==(Matrix const &matrix);
     bool operator!=(Matrix const &matrix);
-    Matrix operator=(Matrix matrix);
-    friend ostream& operator<< (ostream &out, const Matrix &matrix);
-    friend ostream& operator<< (ostream &out, const Matrix *matrix);
-    friend istream& operator>> (istream &in, const Matrix &matrix);
-    friend double calcDet(Matrix &matrix);
-    friend double calcTrace(Matrix &matrix);
-    friend Matrix calcTransp(Matrix &matrix);
-    friend Matrix calcInverse(Matrix &matrix);
-    friend Matrix calcAdj(Matrix &matrix);
-    friend Matrix calcCofactor(Matrix &A, int p, int q);
+    Matrix &operator=(const Matrix& matrix);
+    friend ostream &operator<< (ostream &out, Matrix &matrix);
+    friend istream &operator>> (istream &in, Matrix &matrix);
     friend Matrix fillMatrix(ifstream &fp);
+    friend double calcDet(const Matrix &matrix);
+    friend double calcTrace(const Matrix &matrix);
+    friend Matrix calcTransp(const Matrix &matrix);
+    friend Matrix calcInverse(const Matrix &matrix);
+    friend Matrix calcAdj(const Matrix &matrix);
+    friend Matrix calcCofactor(const Matrix &A, int p, int q);
     friend Matrix calcExpo(Matrix &matrix, int N);
     friend void calculateExpression(vector<Matrix> &operands, string operation, ofstream &fp);
 };
 
-double* Matrix::operator[](int index)
+double& Matrix::operator[](Indexes &indexes)
 {
-    if (index >= size)
-    {
-        cout << "\nMatrix indexing error.\n";
-        exit(0);
-    }
-    return ptr[index];
-}
-Matrix Matrix::operator+(Matrix &matrix)
-{
-    Matrix result(*this);
+    if (indexes.col >= size || indexes.row >= size)
+        throw out_of_range("Matrix indexing error.");
 
-    for(int i=0; i<size; i++)
-        for(int j=0; j<size; j++)
-            result.ptr[i][j]+=matrix.ptr[i][j];
-
-    return result;
+    return ptr[indexes.row][indexes.col];
 }
-Matrix Matrix::operator+=(Matrix &matrix)
+Matrix& Matrix::operator+=(Matrix const &matrix)
 {
     for(int i=0; i<size; i++)
         for(int j=0; j<size; j++)
             ptr[i][j]+=matrix.ptr[i][j];
-
     return *this;
 }
-Matrix Matrix::operator-(Matrix &matrix)
+Matrix Matrix::operator+(Matrix const &matrix)
 {
-    Matrix result(*this);
-    for(int i=0; i<size; i++)
-        for(int j=0; j<size; j++)
-            result.ptr[i][j]-=matrix.ptr[i][j];
-
-    return result;
+    return Matrix(*this)+=matrix;
 }
-Matrix Matrix::operator-=(Matrix &matrix)
+Matrix& Matrix::operator-=(Matrix const &matrix)
 {
     for(int i=0; i<size; i++)
         for(int j=0; j<size; j++)
             ptr[i][j]-=matrix.ptr[i][j];
-
     return *this;
 }
-Matrix Matrix::operator*(Matrix &matrix)
+Matrix Matrix::operator-(Matrix const &matrix)
 {
-    Matrix result(*this);
-    for (int i=0; i<size; i++)
-    {
-        for (int j=0; j<size; j++)
-        {
-            result.ptr[i][j] = 0;
-            for (int k=0; k<size; k++)
-                result.ptr[i][j] += ptr[i][k] * matrix.ptr[k][j];
-        }
-    }
-
-    return result;
+    return Matrix(*this)-=matrix;
 }
-Matrix Matrix::operator*=(Matrix matrix)
+Matrix& Matrix::operator*=(Matrix const &matrix)
 {
     Matrix result(*this);
     for (int i=0; i<size; i++)
@@ -159,9 +135,12 @@ Matrix Matrix::operator*=(Matrix matrix)
                 result.ptr[i][j] += ptr[i][k] * matrix.ptr[k][j];
         }
     }
-
     *this=result;
     return *this;
+}
+Matrix Matrix::operator*(Matrix const &matrix)
+{
+    return Matrix(*this)*=matrix;
 }
 Matrix Matrix::operator*(double number)
 {
@@ -169,7 +148,6 @@ Matrix Matrix::operator*(double number)
     for (int i=0; i<size; i++)
         for (int j=0; j<size; j++)
             result.ptr[i][j]*=number;
-
     return result;
 }
 bool Matrix::operator==(Matrix const &matrix)
@@ -189,22 +167,24 @@ bool Matrix::operator!=(Matrix const &matrix)
     double temp;
     for(int i=0; i<size; i++)
         for(int j=0; j<size; j++)
-            for(int j=0; j<size; j++)
-            {
-                temp=fabs(ptr[i][j] - matrix.ptr[i][j]);
-                if(temp > EPS)
-                    return true;
-            }
+        {
+            temp=fabs(ptr[i][j] - matrix.ptr[i][j]);
+            if(temp > EPS)
+                return true;
+        }
     return false;
 }
-Matrix Matrix::operator=(Matrix matrix)
+Matrix& Matrix::operator=(const Matrix& matrix)
 {
-    for(int i=0; i<size; i++)
-        for(int j=0; j<size; j++)
-            ptr[i][j]=matrix.ptr[i][j];
+    if(&matrix!=this)
+    {
+        for (int i = 0; i < size; i++)
+            for (int j = 0; j < size; j++)
+                ptr[i][j] = matrix.ptr[i][j];
+    }
     return *this;
 }
-ostream& operator<< (ostream &out, const Matrix &matrix)
+ostream& operator<< (ostream &out, Matrix &matrix)
 {
     out << "\\begin{pmatrix}\n";
     int n=matrix.size-1;
@@ -217,20 +197,7 @@ ostream& operator<< (ostream &out, const Matrix &matrix)
     out << "\\end{pmatrix}\n";
     return out;
 }
-ostream& operator<<(ostream &out, const Matrix *matrix)
-{
-    out << "\\begin{pmatrix}\n";
-    int n=matrix->size-1;
-    for(int i=0; i<matrix->size; i++)
-    {
-        for (int j = 0; j < matrix->size; j++)
-            (j==n)? out << matrix->ptr[i][j] << "\\\\" : out << matrix->ptr[i][j] << " & ";
-        out << '\n';
-    }
-    out << "\\end{pmatrix}\n";
-    return out;
-}
-istream& operator>>(istream &in, const Matrix &matrix)			   //Перегруженный оператор для заполнения матрицы только из входного потока пользователя
+istream& operator>>(istream &in, Matrix &matrix)			   // Перегруженный оператор для заполнения матрицы только из входного потока пользователя
 {
     for(int i=0; i<matrix.size; i++)
         for(int j=0; j<matrix.size; j++)
@@ -239,18 +206,18 @@ istream& operator>>(istream &in, const Matrix &matrix)			   //Перегруже
     return in;
 }
 
-Matrix fillMatrix(ifstream &fp)									//Функция для заполнения матрицы из файла
+Matrix fillMatrix(ifstream &fp)									// Функция для заполнения матрицы из файла
 {
     vector<double> first_row;
     double number;
     int i, j, end_of_matrix=0;
-    char c;
+    unsigned char c;
 
     for(i=0; ; i++)
     {
         c=fp.peek();
         if(c<'-' || c>'9')
-            throw "Values inside matrix aren't numbers.";
+            throw runtime_error("Values inside matrix aren't numbers.");
 
         fp >> number;
 
@@ -275,7 +242,7 @@ Matrix fillMatrix(ifstream &fp)									//Функция для заполнен
             {
                 c=fp.peek();
                 if(c<'-' || c>'9')
-                    throw "Values inside matrix aren't numbers.";
+                    throw runtime_error("Values inside matrix aren't numbers.");
                 fp >> matrix.ptr[i][j];
 
                 if(j!=matrix.size)
@@ -284,17 +251,16 @@ Matrix fillMatrix(ifstream &fp)									//Функция для заполнен
     return matrix;
 }
 
-Matrix calcTransp(Matrix &matrix)
+Matrix calcTransp(const Matrix &matrix)
 {
     Matrix transpose(matrix.size);
     for (int i = 0; i < matrix.size; ++i)
-        for (int j = 0; j < matrix.size; ++j) {
+        for (int j = 0; j < matrix.size; ++j)
             transpose.ptr[j][i] = matrix.ptr[i][j];
-        }
     return transpose;
 }
 
-double calcDet(Matrix &matrix)
+double calcDet(const Matrix &matrix)
 {
     double det=0;
     int size=matrix.size;
@@ -302,12 +268,16 @@ double calcDet(Matrix &matrix)
 
     if (size==2)
         return ((matrix.ptr[0][0] * matrix.ptr[1][1]) - (matrix.ptr[1][0] * matrix.ptr[0][1]));
-    else {
-        for (int k=0; k<size; k++) {
+    else
+    {
+        for (int k=0; k<size; k++)
+        {
             int subi=0;
-            for (int i=1; i<size; i++) {
+            for (int i=1; i<size; i++)
+            {
                 int subj=0;
-                for (int j=0; j<size; j++) {
+                for (int j=0; j<size; j++)
+                {
                     if (j==k)
                         continue;
                     submatrix.ptr[subi][subj] = matrix.ptr[i][j];
@@ -323,7 +293,7 @@ double calcDet(Matrix &matrix)
     return det;
 }
 
-Matrix calcCofactor(Matrix &A, int p, int q)
+Matrix calcCofactor(const Matrix &A, int p, int q)
 {
     int size=A.size;
     Matrix temp(A.size);
@@ -336,7 +306,6 @@ Matrix calcCofactor(Matrix &A, int p, int q)
             if (row != p && col != q)
             {
                 temp.ptr[i][j++] = A.ptr[row][col];
-
                 if (j == size - 1)
                 {
                     j = 0;
@@ -348,7 +317,7 @@ Matrix calcCofactor(Matrix &A, int p, int q)
     return temp;
 }
 
-Matrix calcAdj(Matrix &matrix)
+Matrix calcAdj(const Matrix &matrix)
 {
     Matrix adj(matrix.size);
     if (matrix.size == 1)
@@ -373,11 +342,11 @@ Matrix calcAdj(Matrix &matrix)
     return adj;
 }
 
-Matrix calcInverse(Matrix &matrix)
+Matrix calcInverse(const Matrix &matrix)
 {
     double det=calcDet(matrix);
     if (fabs(det) < EPS)
-        throw "Singular matrix, unable to find inverse matrix.";
+        throw runtime_error("Singular matrix, unable to find inverse matrix.");
 
     int size=matrix.size;
 
@@ -391,7 +360,7 @@ Matrix calcInverse(Matrix &matrix)
     return inverse;
 }
 
-double calcTrace(Matrix &matrix)
+double calcTrace(const Matrix &matrix)
 {
     double trace=0;
     for (int i = 0; i < matrix.size; ++i)
@@ -403,7 +372,7 @@ double calcTrace(Matrix &matrix)
 Matrix calcExpo(Matrix &matrix, int N)
 {
     if(N < 1)
-        throw "Can't calculate exponent while N is set to 0.";
+        throw "Can't calculate exponent while N is less or equal to zero.";
     if(N == 1)
         return matrix;
     matrix *= calcExpo(matrix, N-1);
@@ -411,65 +380,57 @@ Matrix calcExpo(Matrix &matrix, int N)
     return matrix;
 }
 
-void calculateExpression(vector<Matrix> &operands, string operation, ofstream &fp)		//Функция для обработки выражения с матрицами и записи результата в выходной файл
+void calculateExpression(vector<Matrix> &operands, string operation, ofstream &fp)		// Функция для обработки выражения с матрицами и записи результата в выходной файл
 {
-    try
+    if (operands.size()>1)
     {
-        if (operands.size()>1)
+        switch (operation[0])
         {
-            switch (operation[0])
-            {
-                case '+':
-                    fp << operands[0].convert() << "+\n" << operands[1].convert() << "=\n" << (operands[0] + operands[1]).convert();
-                    break;
-                case '-':
-                    fp << operands[0].convert() << "-\n" << operands[1].convert() << "=\n" << (operands[0] - operands[1]).convert();
-                    break;
-                case '*':                                                                                       //Здесь также умножение числа и на число
-                    if(operands[0].size==1)
-                        fp << operands[0].ptr[0][0] << "\n*\n" << operands[1].convert() << "=\n" << (operands[1]*operands[0].ptr[0][0]).convert();
-                    else if(operands[1].size==1)
-                        fp << operands[0].convert() << "*\n" << operands[1].ptr[0][0] << "\n=\n" << (operands[0]*operands[1].ptr[0][0]).convert();
-                    else
-                        fp << operands[0].convert() << "*\n" << operands[1].convert() << "=\n" << (operands[0] * operands[1]).convert();
-                    break;
-                case '=':
-                    fp << operands[0].convert() << "==\n" << operands[1].convert() << "=\n" << boolalpha << (operands[0]==operands[1]);
-                    break;
-                case '!':
-                    fp << operands[0].convert() << "!=\n" << operands[1].convert() << "=\n" << boolalpha << (operands[0]!=operands[1]);
-                    break;
-            }
-            operands.pop_back();
-            operands.pop_back();
+            case '+':
+                fp << operands[0].convert() << "+\n" << operands[1].convert() << "=\n" << (operands[0] + operands[1]).convert();
+                break;
+            case '-':
+                fp << operands[0].convert() << "-\n" << operands[1].convert() << "=\n" << (operands[0] - operands[1]).convert();
+                break;
+            case '*':                                                               // Здесь также умножение числа и на число
+                if(operands[0].size==1)
+                    fp << operands[0].ptr[0][0] << "\n*\n" << operands[1].convert() << "=\n" << (operands[1]*operands[0].ptr[0][0]).convert();
+                else if(operands[1].size==1)
+                    fp << operands[0].convert() << "*\n" << operands[1].ptr[0][0] << "\n=\n" << (operands[0]*operands[1].ptr[0][0]).convert();
+                else
+                    fp << operands[0].convert() << "*\n" << operands[1].convert() << "=\n" << (operands[0] * operands[1]).convert();
+                break;
+            case '=':
+                fp << operands[0].convert() << "==\n" << operands[1].convert() << "=\n" << boolalpha << (operands[0]==operands[1]);
+                break;
+            case '!':
+                fp << operands[0].convert() << "!=\n" << operands[1].convert() << "=\n" << boolalpha << (operands[0]!=operands[1]);
+                break;
         }
-        else
+        operands.pop_back();
+    }
+    else
+    {
+        switch (operation[0])
         {
-            switch (operation[0])
-            {
-                case 'd':
-                    fp << operands[0].convert() << "=\n" << calcDet(operands[0]) << '\n';
-                    break;
-                case 's':
-                    fp << "tr\n" << operands[0] << "=\n" << calcTrace(operands[0]);
-                    break;
-                case 't':
-                    fp << operands[0].convert() << "^{T}\n" << "=\n" << calcTransp(operands[0]).convert();
-                    break;
-                case 'i':
-                    fp << operands[0].convert() << "^{-1}\n" << "=\n" << calcInverse(operands[0]).convert();
-                    break;
-                case 'e':
-                    fp << operands[0].convert() << "^{E}\n" << "=\n" << calcExpo(operands[0], operation[1]-'0').convert();
-                    break;
-            }
-            operands.pop_back();
+            case 'd':
+                fp << operands[0].convert() << "=\n" << calcDet(operands[0]) << '\n';
+                break;
+            case 's':
+                fp << "tr\n" << operands[0] << "=\n" << calcTrace(operands[0]);
+                break;
+            case 't':
+                fp << operands[0].convert() << "^{T}\n" << "=\n" << calcTransp(operands[0]).convert();
+                break;
+            case 'i':
+                fp << operands[0].convert() << "^{-1}\n" << "=\n" << calcInverse(operands[0]).convert();
+                break;
+            case 'e':
+                fp << operands[0].convert() << "^{E}\n" << "=\n" << calcExpo(operands[0], operation[1]-'0').convert();
+                break;
         }
     }
-    catch(const char *exc)
-    {
-        cerr << "Error occured while processing operation \"" << operation << "\": " << exc;
-    }
+    operands.pop_back();
     fp << '\n';
 }
 
@@ -479,13 +440,11 @@ int main()
     string operation;
 
     ifstream ifp;
-    ofstream ofp;
     ifp.open("input_file.txt");
-    if(!ifp.is_open())
-        cout<<"Failed to open input file";
+    assert(ifp.is_open() && "Failed to open output file");
+    ofstream ofp;
     ofp.open("output_file.tex");
-    if(!ofp.is_open())
-        cout<<"Failed to open output file";
+    assert(ofp.is_open() && "Failed to open output file");
 
     ofp << "\\[\n";
     try
@@ -496,7 +455,6 @@ int main()
 
             if (ifp.eof())
                 break;
-
             ifp >> operation;
             ifp.get();
             if(ifp.peek()!='\n')
@@ -509,12 +467,11 @@ int main()
     }
     catch(const char *exc)
     {
-        cerr << "Error occured while reading file: " << exc;
+        cerr << "Error occured while processing operation \"" << operation << "\": " << exc;
     }
     ofp << "\\]";
 
     ifp.close();
     ofp.close();
-
     return 0;
 }
