@@ -11,6 +11,14 @@
 
 using namespace std;
 
+int factorial(int n)
+{
+    if(n > 1)
+        return n * factorial(n - 1);
+    else
+        return 1;
+}
+
 typedef struct Indexes                                                          // Структура для передачи в индексатор
 {
     unsigned int row, col;
@@ -30,13 +38,13 @@ private:
     int size;
 
 public:
-    explicit Matrix(int number) : size(number)									// Констурктор обычный int
+    explicit Matrix(int number) : size(number)                                  // Констурктор обычный int
     {
         ptr=new double*[size];
         for(int i=0; i<size; i++)
             ptr[i]=new double[size];
     }
-    Matrix(const Matrix &matrix) : Matrix(matrix.size)					        // Констурктор копий
+    Matrix(const Matrix &matrix) : Matrix(matrix.size)                          // Констурктор копий
     {
         for(int i=0; i<size; i++)
             for(int j=0; j<size; j++)
@@ -71,17 +79,17 @@ public:
     }
 
     double& operator[](Indexes &indexes);
-    Matrix operator+(Matrix const &matrix);
+    Matrix operator+(Matrix const &matrix) const;
     Matrix &operator+=(Matrix const &matrix);
-    Matrix operator-(Matrix const &matrix);
+    Matrix operator-(Matrix const &matrix) const;
     Matrix &operator-=(Matrix const &matrix);
-    Matrix operator*(Matrix const &matrix);
+    Matrix operator*(Matrix const &matrix) const;
     Matrix &operator*=(Matrix const &matrix);
     Matrix operator*(double number);
     bool operator==(Matrix const &matrix);
     bool operator!=(Matrix const &matrix);
     Matrix &operator=(const Matrix& matrix);
-    friend ostream &operator<< (ostream &out, Matrix &matrix);
+    friend ostream &operator<< (ostream &out, const Matrix &matrix);
     friend istream &operator>> (istream &in, Matrix &matrix);
     friend Matrix fillMatrix(ifstream &fp);
     friend double calcDet(const Matrix &matrix);
@@ -90,7 +98,7 @@ public:
     friend Matrix calcInverse(const Matrix &matrix);
     friend Matrix calcAdj(const Matrix &matrix);
     friend Matrix calcCofactor(const Matrix &A, int p, int q);
-    friend Matrix calcExpo(Matrix &matrix, int N);
+    friend Matrix calcExpo(const Matrix &matrix);
     friend void calculateExpression(vector<Matrix> &operands, string operation, ofstream &fp);
 };
 
@@ -108,7 +116,7 @@ Matrix& Matrix::operator+=(Matrix const &matrix)
             ptr[i][j]+=matrix.ptr[i][j];
     return *this;
 }
-Matrix Matrix::operator+(Matrix const &matrix)
+Matrix Matrix::operator+(Matrix const &matrix) const
 {
     return Matrix(*this)+=matrix;
 }
@@ -119,7 +127,7 @@ Matrix& Matrix::operator-=(Matrix const &matrix)
             ptr[i][j]-=matrix.ptr[i][j];
     return *this;
 }
-Matrix Matrix::operator-(Matrix const &matrix)
+Matrix Matrix::operator-(Matrix const &matrix) const
 {
     return Matrix(*this)-=matrix;
 }
@@ -138,7 +146,7 @@ Matrix& Matrix::operator*=(Matrix const &matrix)
     *this=result;
     return *this;
 }
-Matrix Matrix::operator*(Matrix const &matrix)
+Matrix Matrix::operator*(Matrix const &matrix) const
 {
     return Matrix(*this)*=matrix;
 }
@@ -184,7 +192,7 @@ Matrix& Matrix::operator=(const Matrix& matrix)
     }
     return *this;
 }
-ostream& operator<< (ostream &out, Matrix &matrix)
+ostream& operator<< (ostream &out, const Matrix &matrix)
 {
     out << "\\begin{pmatrix}\n";
     int n=matrix.size-1;
@@ -197,7 +205,7 @@ ostream& operator<< (ostream &out, Matrix &matrix)
     out << "\\end{pmatrix}\n";
     return out;
 }
-istream& operator>>(istream &in, Matrix &matrix)			   // Перегруженный оператор для заполнения матрицы только из входного потока пользователя
+istream& operator>>(istream &in, Matrix &matrix)               // Перегруженный оператор для заполнения матрицы только из входного потока пользователя
 {
     for(int i=0; i<matrix.size; i++)
         for(int j=0; j<matrix.size; j++)
@@ -206,7 +214,7 @@ istream& operator>>(istream &in, Matrix &matrix)			   // Перегруженн�
     return in;
 }
 
-Matrix fillMatrix(ifstream &fp)									// Функция для заполнения матрицы из файла
+Matrix fillMatrix(ifstream &fp)                                 // Функция для заполнения матрицы из файла
 {
     vector<double> first_row;
     double number;
@@ -369,18 +377,30 @@ double calcTrace(const Matrix &matrix)
     return trace;
 }
 
-Matrix calcExpo(Matrix &matrix, int N)
+Matrix calcExpo(Matrix const &matrix)
 {
-    if(N < 1)
-        throw "Can't calculate exponent while N is less or equal to zero.";
-    if(N == 1)
-        return matrix;
-    matrix *= calcExpo(matrix, N-1);
+    Matrix identity_matrix(matrix);
+    for (int i = 0; i < matrix.size;i++) {
+        for (int j = 0; j < matrix.size; j++) {
+            if (i == j) identity_matrix.ptr[i][j] = 1;
+            else identity_matrix.ptr[i][j] = 0;
+        }
+    }
 
-    return matrix;
+    Matrix exp_matrix(matrix.size);
+    Matrix tmp_matrix(matrix);
+    for (int i = 0; i < matrix.size; i++)
+    {
+        Matrix fac(1);
+        fac.ptr[0][0] = (float(1) / factorial(i));
+        exp_matrix += tmp_matrix * fac;
+        tmp_matrix *= matrix;
+    }
+    exp_matrix += identity_matrix;
+    return exp_matrix;
 }
 
-void calculateExpression(vector<Matrix> &operands, string operation, ofstream &fp)		// Функция для обработки выражения с матрицами и записи результата в выходной файл
+void calculateExpression(vector<Matrix> &operands, string operation, ofstream &fp)      // Функция для обработки выражения с матрицами и записи результата в выходной файл
 {
     if (operands.size()>1)
     {
@@ -401,10 +421,10 @@ void calculateExpression(vector<Matrix> &operands, string operation, ofstream &f
                     fp << operands[0].convert() << "*\n" << operands[1].convert() << "=\n" << (operands[0] * operands[1]).convert();
                 break;
             case '=':
-                fp << operands[0].convert() << "==\n" << operands[1].convert() << "=\n" << boolalpha << (operands[0]==operands[1]);
+                fp << operands[0].convert() << "==\n" << operands[1].convert() << "=\n" << boolalpha << (operands[0]==operands[1]) << '\n';
                 break;
             case '!':
-                fp << operands[0].convert() << "!=\n" << operands[1].convert() << "=\n" << boolalpha << (operands[0]!=operands[1]);
+                fp << operands[0].convert() << "!=\n" << operands[1].convert() << "=\n" << boolalpha << (operands[0]!=operands[1]) << '\n';
                 break;
         }
         operands.pop_back();
@@ -414,19 +434,24 @@ void calculateExpression(vector<Matrix> &operands, string operation, ofstream &f
         switch (operation[0])
         {
             case 'd':
-                fp << operands[0].convert() << "=\n" << calcDet(operands[0]) << '\n';
+                fp << operands[0].convert() << "d\n=\n" << calcDet(operands[0]) << '\n';
                 break;
             case 's':
-                fp << "tr\n" << operands[0] << "=\n" << calcTrace(operands[0]);
+                fp << operands[0].convert() << "tr\n=\n" << calcTrace(operands[0]) << '\n';
                 break;
             case 't':
-                fp << operands[0].convert() << "^{T}\n" << "=\n" << calcTransp(operands[0]).convert();
+                fp << operands[0].convert() << "^{T}\n=\n" << calcTransp(operands[0]).convert();
                 break;
             case 'i':
-                fp << operands[0].convert() << "^{-1}\n" << "=\n" << calcInverse(operands[0]).convert();
+                fp << operands[0].convert() << "^{-1}\n=\n" << calcInverse(operands[0]).convert();
                 break;
             case 'e':
-                fp << operands[0].convert() << "^{E}\n" << "=\n" << calcExpo(operands[0], operation[1]-'0').convert();
+                if(operation[1]<49)
+                {
+                    operation[1]=50;
+                    cout << "\nExponent power is set to 2.\n";
+                }
+                fp << operands[0].convert() << "^{E}\n=\n" << calcExpo(operands[0]).convert();
                 break;
         }
     }
@@ -457,7 +482,7 @@ int main()
                 break;
             ifp >> operation;
             ifp.get();
-            if(ifp.peek()!='\n')
+            if(ifp.peek()!='\n' && !ifp.eof())
                 operands.push_back(fillMatrix(ifp));
 
             calculateExpression(operands, operation, ofp);
