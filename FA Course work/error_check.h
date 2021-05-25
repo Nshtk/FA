@@ -6,7 +6,9 @@
 
 using namespace std;
 
-int errCheck_Components(int err_code, unsigned int additional_information)          // Можно было упаковать в классы, но, по-моему, лучше так.
+static int err_code;            // Замена errno.
+
+int errCheck_Components(unsigned int additional_information)          // Можно было упаковать в классы, но, по-моему, лучше так.
 {
     switch(err_code)
     {
@@ -19,7 +21,7 @@ int errCheck_Components(int err_code, unsigned int additional_information)      
     }
 }
 
-int errCheck_ClientCode(int err_code, long int additional_information)
+int errCheck_ClientCode()
 {
     switch(err_code)
     {
@@ -35,18 +37,18 @@ int errCheck_ClientCode(int err_code, long int additional_information)
     return 0;
 }
 
-int errCheck_Main(int err_code, long int additional_information)
+void errCheck_Main()
 {
     switch(err_code)
     {
+        case 0:
+            exit(0);
         case 1:
-            cerr << CRITICAL"Failed to open output file.";              // Обьекты, наследуемые от класса исключений, не используются.
+            cerr << CRITICAL"Failed to open output file.";          // Обьекты, наследуемые от класса исключений, при критических ошибках не используются.
             exit(1);
         case 2:
             cerr << NON_CRITICAL"Program has ended with some errors.";
             exit(2);
-        default:
-            exit(0);
     }
 }
 

@@ -7,7 +7,6 @@
 #include <random>
 #include <chrono>
 #include "list_decorator.h"
-#include "generators.h"
 #include "functions.h"
 
 #define NUMBER_OF_KEGS 90
@@ -24,9 +23,9 @@ class KegBag
 private:
     vector<unsigned int> bag;
 public:
-    KegBag()
+    KegBag(unsigned &seed)
     {
-        unsigned seed = chrono::system_clock::now().time_since_epoch().count() + rand();          // rand() прибавлен из-за того, что сид практически не меняется в единицу времени.
+        seed+=rand();                           // rand() прибавлен из-за того, что seed практически не меняется за время, достаточное для генерации нескольких билетов.
         for(int i=1; i<NUMBER_OF_KEGS; i++)
             bag.push_back(i);
         shuffle(bag.begin(), bag.end(), default_random_engine(seed));
@@ -187,7 +186,7 @@ public:
         }
         return 0;
     }
-    friend ostream& operator<< (ostream &out, Ticket<T> &tic)
+    friend ostream& operator<< (ostream &out, const Ticket<T> &tic)
     {
         out << "Lot series: " << tic.lot_number << '\n';
         out << "Ticket: " << tic.ticket_number << "\n";
@@ -253,7 +252,7 @@ public:
         }
         in.ignore(30, '\n');
     }
-    template <class C, template<class> class L> friend Ticket<C> *searchTickets(Game<C, L> &game, Ticket<C> *tic, int &err_code);
+    template <class C, template<class> class L> friend Ticket<C> *searchTickets(Game<C, L> &game, Ticket<C> *tic);
     template <class, template<class> class> friend class Lot;
 };
 
@@ -272,21 +271,18 @@ private:
     KegBag keg_bag;
     ListBasicInterface<L, Ticket<T>*> lot_tickets;
 public:
-    Lot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, GeneratorTicket<T> &gen) : was_processed(false), lot_number(num)
+    Lot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) : was_processed(false), lot_number(num),
+                                                                                                                            keg_bag(seed)
     {
-        if(rand()%2 || sale_chance==100)                                                           // Полная или неполная реализация тиража.
-            for(unsigned int i=0; i<num_of_tickets; i++)
-                lot_tickets.push_front(gen.getTicket(lot_number, i, 1));
-        else
-            for(unsigned int i = 0; i < num_of_tickets; i++)
-                lot_tickets.push_front(gen.getTicket(lot_number, i,(rand()%100)<sale_chance));
+        for(unsigned int i = 0; i < num_of_tickets; i++)
+            lot_tickets.push_front(gen.getTicket(lot_number, i,(rand()%100)<sale_chance));
     }
     ~Lot()
     {
         lot_tickets.clear();
     }
     template <class, template<class> class> friend class Game;
-    friend ostream& operator<< (ostream &out, Lot<T, L> &lot)
+    friend const ostream& operator<< (ostream &out, const Lot<T, L> &lot)
     {
         for(auto it = lot.lot_tickets.begin(); it!=lot.lot_tickets.end(); it++)
             out << **it << '\n';
@@ -299,25 +295,73 @@ template <class T, template<class> class L>
 class Game
 {
 private:
-    unsigned int game_id;
-    unsigned int game_size;
+    unsigned seed;
+    unsigned long long id;
+    unsigned long long count_of_lots;
+    unsigned long long count_of_tickets;
     ListBasicInterface<L, Lot<T, L>*> lot_tickets;
     ListBasicInterface<L, Ticket<T>*> first_tour_winner_tickets;
     ListBasicInterface<L, Ticket<T>*> second_tour_winner_tickets;
     ListBasicInterface<L, Ticket<T>*> third_tour_winner_tickets;
 
-    Game(unsigned int id, unsigned int num_of_lot, unsigned int num_of_tic, float sale_chance, GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic)
-            : game_id(id), game_size(num_of_lot)
+    Game(GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic) : seed(chrono::system_clock::now().time_since_epoch().count())
     {
-        sale_chance*=100;
-        if(sale_chance<1 || sale_chance>100)
-            sale_chance=rand() %100 +1;
-
-        for(int i=0; i<game_size; i++)
-            lot_tickets.push_front(gen_lot.getLot(i, num_of_tic, sale_chance, gen_tic));
+        generationProceed(generationMenu(), gen_lot, gen_tic);      // Вызов меню для задания параметров генерации в качестве параметра для основной функции генерации
     }
 
-    void printWinners(ListBasicInterface<L, Ticket<T>*> &winner_tickets)
+    float generationMenu()
+    {
+        float sale_chance;
+        cout << "Available generation parameters:\n"
+                "Game id;\n"
+                "Number of lots;\n"
+                "Number of tickets in lot. Set this parameter to 0 if number of tickets in each lot should vary;\n"
+                "Ticket sale chance (float). Set this parameter to number less than 0 if sale chance for tickets in each lot should vary.\t\t   "
+                                            "Set this parameter to number greater than 1 to get random chance of sale for tickets in each lot.\n\n"
+                "Enter parameters:\n";
+        cin >> id >> count_of_lots >> count_of_tickets >> sale_chance;
+        return sale_chance;
+    }
+    void generationProceed(float sale_chance, GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic)
+    {
+        sale_chance*=100;
+        if(sale_chance>100)
+            sale_chance=rand() %100 +1;
+
+        if(!count_of_tickets && (sale_chance<0))                                // Не хочется еще больше плодить сущностей и делать отдельную функцию.
+        {
+            unsigned long long num;
+            for(int i=0; i<count_of_lots; i++)
+            {
+                cout << "Enter number of tickets and/or sale chance:\n";
+                cin >> num >> sale_chance;
+                lot_tickets.push_front(gen_lot.getLot(i, num, sale_chance, seed, gen_tic));
+            }
+        }
+        else if(!count_of_tickets)
+        {
+            unsigned long long num;
+            for(int i=0; i<count_of_lots; i++)
+            {
+                cout << "Enter number of tickets and/or sale chance";
+                cin >> num;
+                lot_tickets.push_front(gen_lot.getLot(i, count_of_tickets, sale_chance, seed, gen_tic));
+            }
+        }
+        else if(sale_chance<0)
+        {
+            for(int i=0; i<count_of_lots; i++)
+            {
+                cout << "Enter number of tickets and/or sale chance";
+                cin >> sale_chance;
+                lot_tickets.push_front(gen_lot.getLot(i, count_of_tickets, sale_chance, seed, gen_tic));
+            }
+        }
+        else
+            for(int i=0; i<count_of_lots; i++)
+                lot_tickets.push_front(gen_lot.getLot(i, count_of_tickets, sale_chance, seed, gen_tic));
+    }
+    void printWinners(ListBasicInterface<L, Ticket<T>*> &winner_tickets) const
     {
         if(winner_tickets.empty())
         {
@@ -329,12 +373,12 @@ private:
     }
     int processTour(unsigned int n, auto &lot, ListBasicInterface<L, Ticket<T>*> &tour_winner_tickets, int victory_type, vector<unsigned int> &kegs)
     {
-        for(int i=0; i<n; i++)
+        for(int i=0; i<n; i++)                                       // Определение победителей происходит как по условию - после каждого хода.
         {
             (*lot)->keg_bag.getKegs(kegs, 1);
-            for (auto tic : (*lot)->lot_tickets)
-                if (tic->getStatus() == 1)
-                    if (tic->processTicket(kegs, victory_type))
+            for(auto tic : (*lot)->lot_tickets)
+                if(tic->getStatus() == 1)
+                    if(tic->processTicket(kegs, victory_type))
                         tour_winner_tickets.push_front(tic);
         }
     }
@@ -372,7 +416,7 @@ public:
         for(auto tic : (*lot)->lot_tickets)
             if(tic->getStatus()==1)
                 tic->processTicket(kegs, 1);
-        processTour(10, lot, first_tour_winner_tickets, 1, kegs);           // Первый параметр - количество вынимаемых бочонков в туре.
+        processTour(10, lot, first_tour_winner_tickets, 1, kegs);               // Первый параметр - количество вынимаемых бочонков в туре.
         cout << "Processing second tour...\n";
         processTour(30, lot, second_tour_winner_tickets, 2, kegs);
         cout << "Processing third tour...\n";
@@ -383,18 +427,18 @@ public:
 
         return 0;
     }
-    int processGame(int process_mode, unsigned int number, int &err_code)
+    int processGame(int process_mode, unsigned int number)
     {
         switch(process_mode)
         {
             case 0:
                 for(auto lot = lot_tickets.begin(); lot != lot_tickets.end(); lot++)
                     if((err_code=processLot((*lot)->lot_number, lot)))
-                        errCheck_Components(err_code, (*lot)->lot_number);
+                        errCheck_Components((*lot)->lot_number);
                 break;
             case 1:
                 if((err_code=processLot(number, lot_tickets.end())))
-                    errCheck_Components(err_code, number);
+                    errCheck_Components(number);
                 break;
             default:
                 cout << "\nNo such mode, try again.";
@@ -413,9 +457,9 @@ public:
     }
 
     template <class, template<class> class> friend class GeneratorGameRusLot;
-    friend ostream& operator<< (ostream &out, Game<T, L> &game)
+    friend const ostream& operator<< (ostream &out, const Game<T, L> &game)
     {
-        out << "Game ID: " << game.game_id << "\n\n";
+        out << "Game ID: " << game.id << "\n\n";
         for(auto it=game.lot_tickets.begin(); it!=game.lot_tickets.end(); it++)
             out << **it;
         return out;
@@ -423,14 +467,13 @@ public:
 };
 
 template <class C, template<class> class L>
-Ticket<C> *searchTickets(Game<C, L> &game, Ticket<C> *tic, int &err_code)           // По обработке ошибок ипринципу работы (не в бесконечном цикле) предполагается, что функция
-                                                                                    // должна использоваться для работы с компонентами, не для пользователя.
+Ticket<C> *searchTickets(Game<C, L> &game, Ticket<C> *tic)           // Функция может быть также использована при работе с компонентами, так как возвращает указатель типа Ticket.
 {
     ifstream fp("output_file.txt");
     if(!fp.is_open())
     {
         err_code=1;
-        errCheck_Main(err_code, 0);
+        errCheck_Main();
     }
     fp.ignore(10,'\n');                                                    // Пропуск Game id.
     fp.get();
@@ -466,4 +509,5 @@ Ticket<C> *searchTickets(Game<C, L> &game, Ticket<C> *tic, int &err_code)       
     cout << "Ticket not found.\n";
     return nullptr;
 }
+
 #endif

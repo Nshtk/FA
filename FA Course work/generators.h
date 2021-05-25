@@ -9,7 +9,6 @@ class GeneratorTicket
 {
 public:
     virtual Ticket<T> *getTicket(unsigned int lot_num, unsigned int ticket_num, unsigned int status) const = 0;
-    template <class, template<class> class> friend class Lot;
 };
 
 class GeneratorTicketRusLot : public GeneratorTicket<FieldRusLot>
@@ -25,16 +24,16 @@ template <class T, template<class> class L>
 class GeneratorLot
 {
 public:
-    virtual Lot<T, L> *getLot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, GeneratorTicket<T> &gen) const=0;
+    virtual Lot<T, L> *getLot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) const = 0;
 };
 
 template <class T, template<class> class L>
 class GeneratorLotRusLot : public GeneratorLot<FieldRusLot, L>
 {
 public:
-    Lot<FieldRusLot, L> *getLot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, GeneratorTicket<T> &gen) const override
+    Lot<FieldRusLot, L> *getLot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) const override
     {
-        return new Lot<FieldRusLot, L>(num, num_of_tickets, sale_chance, gen);
+        return new Lot<FieldRusLot, L>(num, num_of_tickets, sale_chance, seed, gen);
     }
 };
 
@@ -42,18 +41,16 @@ template <class T, template<class> class L>
 class GeneratorGame
 {
 public:
-    virtual Game<T, L> *getGame(unsigned int id, unsigned int num_of_lot, unsigned int num_of_tic, float sale_chance,
-                                GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic) const=0;
+    virtual Game<T, L> *getGame(GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic) const = 0;
 };
 
 template <class T, template<class> class L>
 class GeneratorGameRusLot : public GeneratorGame<FieldRusLot, L>
 {
 public:
-    Game<FieldRusLot, L> *getGame(unsigned int id, unsigned int num_of_lot, unsigned int num_of_tic, float sale_chance,
-                                  GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic) const override
+    Game<FieldRusLot, L> *getGame(GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic) const override
     {
-        return new Game<FieldRusLot, L>(id, num_of_lot, num_of_tic, sale_chance, gen_lot, gen_tic);
+        return new Game<FieldRusLot, L>(gen_lot, gen_tic);
     };
 };
 

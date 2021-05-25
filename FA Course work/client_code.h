@@ -2,16 +2,18 @@
 #define FA_KURS_CLIENT_CODE_H
 
 #include <forward_list>
+#include "generators.h"
 
-#define LIST_IMPLEMENTATION forward_list
 #define BAD_ACCESS "You cannot access this operation: "
+#define LIST_IMPLEMENTATION List
 
-int clientCode(ofstream &fp, int err_code)
+int clientCode(ofstream &fp)
 {
     SuperGenerator<FieldRusLot, LIST_IMPLEMENTATION> *super_gen = new SuperGeneratorRusLot<LIST_IMPLEMENTATION>();
-    Game<FieldRusLot, LIST_IMPLEMENTATION> *game=super_gen->gen_game->getGame(0, 3, 20000, 0.8, *super_gen->gen_lot,
-                                                                              *super_gen->gen_tic);
-    cout << "Available operations:\n"
+    Game<FieldRusLot, LIST_IMPLEMENTATION> *game=super_gen->gen_game->getGame(*super_gen->gen_lot, *super_gen->gen_tic);   // Пример ввода: 0, 2, 2000000, 0.8
+
+    cout << "Tickets were successfully generated.\n\n"
+            "Available operations:\n"
             "'p' - enter process mode and id of lot to process. In zero mode id is useless;\n"
             "'o' - print winners;\n"
             "'f' - write processed data to output_file;\n"
@@ -22,7 +24,7 @@ int clientCode(ofstream &fp, int err_code)
     bool proceed=true, p_not_blocked=true, s_not_blocked=false, o_f_not_blocked=false;
     while(proceed)
     {
-        cout << "\n\nEnter operation:\n";
+        cout << "\n\nEnter operation:\n";                               // Пример ввода: p 0 0
         cin >> operation;
         switch(operation)
         {
@@ -56,7 +58,7 @@ int clientCode(ofstream &fp, int err_code)
                 {
                     fp << *game;
                     s_not_blocked=true;
-                    cout << "Done.\n";
+                    cout << "Done.";
                 }
                 else
                     cout << BAD_ACCESS"Game has not been processed or processing has ended with errors.\n";
@@ -65,7 +67,7 @@ int clientCode(ofstream &fp, int err_code)
             case 's':
                 if(s_not_blocked)
                 {
-                    if(!searchTickets(*game, super_gen->gen_tic->getTicket(0, 0, -1), err_code))
+                    if(!searchTickets(*game, super_gen->gen_tic->getTicket(0, 0, -1)))       // Пример ввода: 0 432 -1
                         err_code=1;
                 }
                 else
@@ -82,7 +84,7 @@ int clientCode(ofstream &fp, int err_code)
     }
     delete super_gen; delete game;
 
-    return errCheck_ClientCode(err_code, 0);
+    return errCheck_ClientCode();
 }
 
 #endif

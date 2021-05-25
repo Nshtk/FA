@@ -66,8 +66,8 @@ public:
         const Node<T>* current;
     public:
         iterator() : current(nullptr) {}
+        iterator(const Node<T>* p_node) : current(p_node) {}
 
-        iterator(const Node<T>* pNode) noexcept : current(pNode) {}
         iterator& operator=(Node<T>* node)
         {
             this->current = node;
@@ -85,11 +85,11 @@ public:
             ++*this;
             return iterator;
         }
-        bool operator==(const iterator& it)
+        bool operator==(const iterator& it) const
         {
             return current == it.current;
         }
-        bool operator!=(const iterator& it)
+        bool operator!=(const iterator& it) const
         {
             return current != it.current;
         }
@@ -115,11 +115,11 @@ private:
     Container<T> lst;
 public:
     ListBasicInterface() = default;
-    typename Container<T>::iterator begin()
+    typename Container<T>::iterator begin() const
     {
         return lst.begin();
     }
-    typename Container<T>::iterator end()
+    typename Container<T>::iterator end() const
     {
         return lst.end();
     }
