@@ -8,13 +8,13 @@ template<class T>
 class GeneratorTicket
 {
 public:
-    virtual Ticket<T> *getTicket(unsigned int lot_num, unsigned int ticket_num, unsigned int status) const = 0;
+    virtual Ticket<T> *getTicket(unsigned long long lot_num, unsigned long long ticket_num, unsigned int status) const = 0;
 };
 
 class GeneratorTicketRusLot : public GeneratorTicket<FieldRusLot>
 {
 public:
-    Ticket<FieldRusLot> *getTicket(unsigned int lot_num, unsigned int ticket_num, unsigned int status) const override
+    Ticket<FieldRusLot> *getTicket(unsigned long long lot_num, unsigned long long ticket_num, unsigned int status) const override
     {
         return new TicketRusLot(lot_num, ticket_num, status);
     }
@@ -24,14 +24,14 @@ template <class T, template<class> class L>
 class GeneratorLot
 {
 public:
-    virtual Lot<T, L> *getLot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) const = 0;
+    virtual Lot<T, L> *getLot(unsigned long long num, unsigned long long num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) const = 0;
 };
 
 template <class T, template<class> class L>
 class GeneratorLotRusLot : public GeneratorLot<FieldRusLot, L>
 {
 public:
-    Lot<FieldRusLot, L> *getLot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) const override
+    Lot<FieldRusLot, L> *getLot(unsigned long long num, unsigned long long num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) const override
     {
         return new Lot<FieldRusLot, L>(num, num_of_tickets, sale_chance, seed, gen);
     }

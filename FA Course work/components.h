@@ -52,17 +52,17 @@ public:
 class Field
 {
 protected:
-    unsigned int row_count;
-    unsigned int col_count;
+    unsigned long long row_count;
+    unsigned long long col_count;
     int8_t **field;
 public:
-    Field(unsigned int rows, unsigned int cols) : row_count(rows), col_count(cols)
+    Field(unsigned long long rows, unsigned long long cols) : row_count(rows), col_count(cols)
     {
-        unsigned int j;
+        unsigned long long j;
         int8_t field_values_in_row[2][5];
 
         field=new int8_t *[row_count];
-        for(unsigned int i=0; i<row_count; i++)
+        for(unsigned long long i=0; i<row_count; i++)
         {
             field[i]=new int8_t[col_count];
             for(j=0; j<col_count; j++)
@@ -121,10 +121,10 @@ template<class T>
 class Ticket
 {
 protected:
-    unsigned int lot_number, ticket_number, status;
+    unsigned long long lot_number, ticket_number, status;
     vector<T> fields;
 public:
-    Ticket(unsigned int lot_num, unsigned int ticket_num, unsigned int field_count, unsigned int status) :
+    Ticket(unsigned long long lot_num, unsigned long long ticket_num, unsigned int field_count, unsigned int status) :
             lot_number(lot_num), ticket_number(ticket_num),
             fields(field_count), status(status) {}
     ~Ticket()
@@ -259,7 +259,7 @@ public:
 class TicketRusLot : public Ticket<FieldRusLot>
 {
 public:
-    TicketRusLot(unsigned int lot_num, unsigned int ticket_num, unsigned int status) : Ticket(lot_num, ticket_num, 2, status) {}
+    TicketRusLot(unsigned long long lot_num, unsigned long long ticket_num, unsigned int status) : Ticket(lot_num, ticket_num, 2, status) {}
 };
 
 template <class T, template<class> class L>
@@ -267,14 +267,14 @@ class Lot
 {
 private:
     bool was_processed;
-    unsigned int lot_number;
+    unsigned long long lot_number;
     KegBag keg_bag;
     ListBasicInterface<L, Ticket<T>*> lot_tickets;
 public:
-    Lot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) : was_processed(false), lot_number(num),
+    Lot(unsigned long long num, unsigned long long num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) : was_processed(false), lot_number(num),
                                                                                                                             keg_bag(seed)
     {
-        for(unsigned int i = 0; i < num_of_tickets; i++)
+        for(unsigned long long i=0; i<num_of_tickets; i++)
             lot_tickets.push_front(gen.getTicket(lot_number, i,(rand()%100)<sale_chance));
     }
     ~Lot()
@@ -282,7 +282,7 @@ public:
         lot_tickets.clear();
     }
     template <class, template<class> class> friend class Game;
-    friend const ostream& operator<< (ostream &out, const Lot<T, L> &lot)
+    friend const ostream& operator<< (ostream &out, Lot<T, L> &lot)
     {
         for(auto it = lot.lot_tickets.begin(); it!=lot.lot_tickets.end(); it++)
             out << **it << '\n';
@@ -324,10 +324,6 @@ private:
     }
     void generationProceed(float sale_chance, GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic)
     {
-        sale_chance*=100;
-        if(sale_chance>100)
-            sale_chance=rand() %100 +1;
-
         if(!count_of_tickets && (sale_chance<0))                                // Не хочется еще больше плодить сущностей и делать отдельную функцию.
         {
             unsigned long long num;
@@ -335,7 +331,7 @@ private:
             {
                 cout << "Enter number of tickets and/or sale chance:\n";
                 cin >> num >> sale_chance;
-                lot_tickets.push_front(gen_lot.getLot(i, num, sale_chance, seed, gen_tic));
+                lot_tickets.push_front(gen_lot.getLot(i, num, floatChanceToInt(sale_chance), seed, gen_tic));
             }
         }
         else if(!count_of_tickets)
@@ -343,7 +339,7 @@ private:
             unsigned long long num;
             for(int i=0; i<count_of_lots; i++)
             {
-                cout << "Enter number of tickets and/or sale chance";
+                cout << "Enter number of tickets and/or sale chance:\n";
                 cin >> num;
                 lot_tickets.push_front(gen_lot.getLot(i, count_of_tickets, sale_chance, seed, gen_tic));
             }
@@ -352,14 +348,17 @@ private:
         {
             for(int i=0; i<count_of_lots; i++)
             {
-                cout << "Enter number of tickets and/or sale chance";
+                cout << "Enter number of tickets and/or sale chance:\n";
                 cin >> sale_chance;
-                lot_tickets.push_front(gen_lot.getLot(i, count_of_tickets, sale_chance, seed, gen_tic));
+                lot_tickets.push_front(gen_lot.getLot(i, count_of_tickets, floatChanceToInt(sale_chance), seed, gen_tic));
             }
         }
         else
-            for(int i=0; i<count_of_lots; i++)
+        {
+            sale_chance = floatChanceToInt(sale_chance);
+            for (int i = 0; i < count_of_lots; i++)
                 lot_tickets.push_front(gen_lot.getLot(i, count_of_tickets, sale_chance, seed, gen_tic));
+        }
     }
     void printWinners(ListBasicInterface<L, Ticket<T>*> &winner_tickets) const
     {
@@ -427,12 +426,12 @@ public:
 
         return 0;
     }
-    int processGame(int process_mode, unsigned int number)
+    int processGame(int process_mode, unsigned long long number)
     {
         switch(process_mode)
         {
             case 0:
-                for(auto lot = lot_tickets.begin(); lot != lot_tickets.end(); lot++)
+                for(auto lot=lot_tickets.begin(); lot!=lot_tickets.end(); lot++)
                     if((err_code=processLot((*lot)->lot_number, lot)))
                         errCheck_Components((*lot)->lot_number);
                 break;
@@ -457,7 +456,7 @@ public:
     }
 
     template <class, template<class> class> friend class GeneratorGameRusLot;
-    friend const ostream& operator<< (ostream &out, const Game<T, L> &game)
+    friend const ostream& operator<< (ostream &out, Game<T, L> &game)
     {
         out << "Game ID: " << game.id << "\n\n";
         for(auto it=game.lot_tickets.begin(); it!=game.lot_tickets.end(); it++)
@@ -478,12 +477,15 @@ Ticket<C> *searchTickets(Game<C, L> &game, Ticket<C> *tic)           // Функ
     fp.ignore(10,'\n');                                                    // Пропуск Game id.
     fp.get();
 
-    int criteria[3], initial_value=0, count_of_matching;
-    cout << "\nEnter lot number, ticket number, status to find ticket.\n"
-            "If you enter a negative number for criteria, this criteria will not be taken into consideration when searching."
-            "\nIn that case first matching ticket will be returned.\n";
+    long long criteria[3], initial_value=0, count_of_matching;
+    cout << "\nAvailable searching parameters:\n"
+            "Lot number;\n"
+            "Ticket number;\n"
+            "Ticket status.\n"
+            "If you enter a negative number for criteria, this criteria will not be taken into consideration when searching. "
+            "In that case first matching ticket will be returned.\n";
     cin >> criteria[0] >> criteria[1] >> criteria[2];
-    for(int i : criteria)
+    for(long long i : criteria)
         if(i<0)
             initial_value++;
     do

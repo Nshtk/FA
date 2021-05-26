@@ -1,6 +1,14 @@
 #ifndef FA_KURS_FUNCTIONS_H
 #define FA_KURS_FUNCTIONS_H
 
+int floatChanceToInt(float chance)
+{
+    chance*=100;
+    if(chance>100)
+        chance=rand() %100 +1;
+    return (int)chance;
+}
+
 int foundDuplicate(int8_t *arr, int i, int number)
 {
     i++;

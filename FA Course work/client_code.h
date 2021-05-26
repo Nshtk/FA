@@ -32,7 +32,7 @@ int clientCode(ofstream &fp)
                 if(p_not_blocked)
                 {
                     cin >> process_mode >> number;
-                    while((err_code = game->processGame(process_mode, number, err_code)) == -1)
+                    while((err_code = game->processGame(process_mode, number)) == -1)
                         cin >> process_mode;
                     if(err_code)
                     {
@@ -58,7 +58,7 @@ int clientCode(ofstream &fp)
                 {
                     fp << *game;
                     s_not_blocked=true;
-                    cout << "Done.";
+                    cout << "Processed data has been written to file.";
                 }
                 else
                     cout << BAD_ACCESS"Game has not been processed or processing has ended with errors.\n";

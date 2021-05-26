@@ -24,7 +24,7 @@ public:
     {
         return (head==nullptr);
     }
-    void push_front(T data)
+    void push_front(const T &data)
     {
         temp = new Node<T>;
         temp->data = data;
@@ -34,22 +34,14 @@ public:
             temp->next = head;
         head = temp;
     }
-    bool pop_front(T data)
+    void pop_front()
     {
-        temp = head;
-        Node<T> *prev;
-        while(temp->next != nullptr && temp->data != data)
+        if(!empty())
         {
-            prev = temp;
-            temp = temp->next;
+            Node<T> *tmp=head;
+            head=head->next;
+            delete tmp;
         }
-        if(temp->data == data)
-        {
-            prev->next = temp->next;
-            delete temp;
-            return true;
-        }
-        return false;
     }
     void clear()
     {
@@ -93,7 +85,7 @@ public:
         {
             return current != it.current;
         }
-        T operator*()
+        T operator*() const
         {
             return current->data;
         }
@@ -115,11 +107,11 @@ private:
     Container<T> lst;
 public:
     ListBasicInterface() = default;
-    typename Container<T>::iterator begin() const
+    typename Container<T>::iterator begin()
     {
         return lst.begin();
     }
-    typename Container<T>::iterator end() const
+    typename Container<T>::iterator end()
     {
         return lst.end();
     }
