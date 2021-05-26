@@ -8,7 +8,7 @@
 %%% Преамбула
 \author{Солдатов Вячеслав Алексеевич}
 \title{Паттерны проектирования}
-\date{\today}
+\date{}
 \MAIProfessorName{Романенков Александр Михайлович}
 \MAIWorkType{Курсовая работа}
 \MAISubject{Фундаментальные алгоритмы}
@@ -49,7 +49,7 @@
   \item Открытие файла на запись с проверкой. Если проверка не пройдена, программа завершает свою работу с кодом ошибки, переданным в функцию errCheck\_Main(), которая также выводит информацию для пользователя в соответствии с кодом ошибки.
   \item Передача управления функции clientCode()
   \item Создание генераторов для генерации обьектов типа: БИЛЕТ, ТИРАЖ, ИГРА.
-  \item Создание объекта класса ИГРА, передача в конструктор класса следующих параметров: id игры, количество тиражей, количество билетов в каждом тираже, шанс продажи билета.
+  \item Создание объекта класса ИГРА, ввод пользователем следующих параметров: id игры, количество тиражей, количество билетов в каждом тираже, шанс продажи билета.
   \item Создание объектов класса ТИРАЖ внутри конструктора класса ИГРА с помощью генератора, помещение объектов класса ТИРАЖ в односвязный список указателей типа ТИРАЖ - приватное поле класса ИГРА. 
   \item Создание объектов класса БИЛЕТ, внутри конструктора класса ТИРАЖ с помощью генератора, помещение объектов класса БИЛЕТ в односвязный список указателей типа БИЛЕТ - приватное поле класса ТИРАЖ. 
   \item Возвращение управления функции clientCode(), начало взаимодействия с пользователем в формате "ввод операции - вывод данных или особого ответа."
@@ -83,43 +83,69 @@
 \item Очистка памяти.
 \subsubsection{functions.h}
 \begin{center}
+   Функция floatChanceToInt(float)
+\end{center}
+
+Приведение пользовательского значения типа float к значению типа int. Используется для получения шанса продажи билетов для тиража.
+\newpage
+\begin{center}
    Функция foundDuplicate(int8\_t*, int, int)
 \end{center}
+
 Поиск дубликатов в массиве, замена дубликата другим значением
 \begin{center}
    Функция getValues(int8\_t*)
 \end{center}
-Заполнение массива размером 2х5 случайными значениями, используется функция foundDuplicate()
+
+Заполнение массива размером 2х5 случайными значениями, используется функция foundDuplicate().
 \subsubsection{components.h}
-Все классы, кроме класса KegBag, описанные в этом заголовочном файле, имеют вроизводные классы с приставкой RusLot в названии
+Все классы, кроме класса KegBag, описанные в этом заголовочном файле, имеют вроизводные классы с приставкой RusLot в названии.
 \begin{center}
    Класс KegBag
 \end{center}
-Задача этого класса - симуляция мешка с бочонками. Количество бочонков задается макросом NUMBER\_OF\_KEGS, специально сделано неизменяемым с пользовательской стороны.Класс имеет метод для доставания бочонка или нескольких бочонков getKegs(vector<unsigned int>&, unsigned int), а также оператор вывода в поток.
+
+Задача этого класса - симуляция мешка с бочонками. Количество бочонков задается макросом NUMBER\_OF\_KEGS и специально сделано неизменяемым с пользовательской стороны. Класс имеет метод для вытаскивания одного бочонка или нескольких бочонков getKegs(vector<unsigned int>&, unsigned int), а также оператор вывода в поток.
 \begin{center}
    Абстрактный класс Field
 \end{center}
+
 Этот класс содержит указатель на указатель типа unsigned int8\_t, количество строк и столбцов поля билета, имеет перегруженный деструктор для очистки памяти, операторы выгрузки и вставки в поток. Класс Ticket является дружественным к этому классу.
 \begin{center}
    Шаблонный абстрактный класс Ticket
 \end{center}
+
 Этот класс содержит шаблонный вектор полей производного класса от класса Ticket, а также поля атомарных типов для вывода информации о билете. Имеет метод getStatus() нужный для получения информации о статусе билета (продан, куплен, победил в n-ом туре и т.д.), processTicket(), который "зачеркивает" совпавшие числа в полях билета, имеет операторы вставки и выгрузки из потока. Абстрактный класс Lot и шаблонная функция Ticket<> *searchTickets(Game<, >&, Ticket<>*, int) являются дружественными к этому классу.
 \begin{center}
    Шаблонный абстрактный класс Lot
 \end{center}
+
 Этот класс хранит список указателей на объекты класса Ticket, объект класса KegBag, оператор выгрузки из потока. Абстрактный шаблонный класс Game является дружественным к этому классу.
 \begin{center}
    Шаблонный абстрактный класс Game
 \end{center}
-Этот класс хранит список указателей на объекты класса Lot, а также три списка указателей на объекты класса Ticket. Класс Game в самом верху иерархии лотереи, имея список класса Lot (тираж). Конструктор класса создает летерию, иерархично создавая объекты классов типа Lot и Ticket. Game имеет методы вывода в стандартный поток списков билетов-победителей printWinners(ListBasicInterface< , Ticket<>*>&), обработки тиража processLot(long int, auto lot) и всей игры processGame(int, unsigned int, int), проведения розыгрыша processTour(unsigned int, auto& lot, ListBasicInterface< , Ticket<>*>&, int, vector<unsigned int>&), вставки в поток.
+
+Этот класс хранит список указателей на объекты класса Lot, а также три списка указателей на объекты класса Ticket. Класс Game в самом верху иерархии лотереи, имея список класса Lot (тираж). Конструктор класса, используя методы класса, создает лотерию, иерархично создавая объекты классов типа Lot и Ticket. Game имеет методы вывода в стандартный поток списков билетов-победителей printWinners(ListBasicInterface< , Ticket<>*>&), задания пользователем параметров генерации тиражей и билетов generationMenu(), генерации тиражей generationProceed(float, GeneratorLot<T, L>&, GeneratorTicket<T>&), обработки тиража processLot(long int, auto lot) и всей игры processGame(int, unsigned int, int), проведения розыгрыша processTour(unsigned int, auto& lot, ListBasicInterface< , Ticket<>*>&, int, vector<unsigned int>&), вставки в поток.
 \subsubsection{generators.h}
-В этом файле хранятся абстрактные шаблонные и производные генераторы для всех классов, кроме Field и KegBag. Также здесь определен абстрактный класс SuperGenerator, хранящий указатели на абстрактные шаблонные генераторы.
+В этом файле хранятся абстрактные шаблонные и производные генераторы для всех классов, кроме Field и KegBag. При генерации билетов используется паттерн "Фабричный метод".Также здесь определен абстрактный класс SuperGenerator, хранящий указатели на абстрактные шаблонные генераторы.
 \subsubsection{err\_check.h}
 В этом файле хранятся хранятся функции int errCheck\_Components(int, unsigned int), int errCheck\_ClientCode(int, long int), int errCheck\_Main(int, long int) для обработки ошибок на разных уровнях выполнения программы.
+Реализация одной из функций:
+\begin{minted}{C++}
+int errCheck_Components(unsigned int additional_information)
+{
+    switch(err_code)
+    {
+        case 1:
+            cerr << NON_CRITICAL"Unable to find Lot with id " << additional_information << " in Game!\nProcessing of this lot will not begin.\n\n";
+            break;
+        case 2:
+            cerr << NON_CRITICAL"Lot with id " << additional_information << " has been already processed.\nReprocessing is prohibited\n\n";
+            break;
+    }
+}
+\end{minted}
 \subsubsection{list\_decorator.h}
-\begin{center}
-   В этом файле хранится реализация собственного односвязного списка в виде класса List со стандартными для односвязного списка методами и общий для List и forward\_list шаблонный интерфейс в виде класса ListBasicInterface, хранящий контейнер односвязного списка.
-\end{center}
+В этом файле хранится реализация собственного односвязного списка в виде класса List со стандартными для односвязного списка методами и общий для List и forward\_list шаблонный интерфейс в виде класса ListBasicInterface, хранящий контейнер односвязного списка.
 
 \begin{center}
     \subsubsection{Структура билета}
@@ -137,48 +163,71 @@
     \subsubsection{Демонстрация работы, входные и выходные данные}
 \end{center}
 
-
 \begin{figure}[H]
+  \centering
+  \captionsetup{justification=centering,margin=1cm}
+  \includegraphics[width=\linewidth]{pictures/9}
+  \caption{Пользователь вводит собственные параметры для генерации тиражей.}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \captionsetup{justification=centering,margin=1cm}
   \includegraphics[width=\linewidth]{pictures/1}
-  \caption{Пользователь вводит операцию обработки первого и второго тиража билетов, программа обрабатывает тиражи без ошибок.}
+  \caption{Пользователь вводит операцию обработки первого и второго тиража билетов, и операцию вывода победитлей в стандартный поток. Программа обрабатывает тиражи без ошибок.}
 \end{figure}
 \begin{figure}
   \centering
+  \captionsetup{justification=centering,margin=1cm}
   \includegraphics[width=\linewidth]{pictures/2}
   \caption{Программа выводит в стандартный поток вывода билеты, победившие в первом туре.}
 \end{figure}
 \begin{figure}
   \centering
-  \includegraphics[width=\linewidth]{pictures/3}
+  \captionsetup{justification=centering,margin=1cm}
+  \includegraphics[scale=.95]{pictures/3}
   \caption{Программа выводит в стандартный поток вывода билеты, победившие в первом туре.}
 \end{figure}
 \begin{figure}[H]
-  \includegraphics[width=\linewidth]{pictures/4}
+  \centering
+  \captionsetup{justification=centering,margin=1cm}
+  \includegraphics[scale=.95]{pictures/4}
   \caption{Программа выводит в стандартный поток вывода билеты, победившие во втором туре.}
 \end{figure}
 \begin{figure}
   \centering
+  \captionsetup{justification=centering,margin=1cm}
   \includegraphics[width=\linewidth]{pictures/5}
   \caption{Программа закончила вывод победивших во втором туре билетов и сообщила, что победителей в третьем туре нет. Пользователь вводит операцию обработки третьего, последнего тиража и операцию вывода данных в файл.}
 \end{figure}
-\begin{figure}
+\begin{figure}[H]
   \centering
-  \includegraphics[width=\linewidth]{pictures/6}
-  \caption{Пользователь вводит операцию поиска билета и находит билет согласно введенным параметрам.}
+  \captionsetup{justification=centering,margin=1cm}
+  \includegraphics[width=\linewidth]{pictures/10}
+  \caption{Пользователь вводит операцию поиска билета и программа находит билет согласно введенным параметрам.}
 \end{figure}
 \begin{figure}
   \centering
+  \captionsetup{justification=centering,margin=1cm}
   \includegraphics[width=\linewidth]{pictures/7}
   \caption{Пользователь звершает свою работу с программой, которая отработала без ошибок.}
 \end{figure}
 \begin{figure}[H]
-  \includegraphics[width=\linewidth]{pictures/8}
+  \centering
+  \captionsetup{justification=centering,margin=1cm}
+  \includegraphics{pictures/8}
   \caption{Часть содержания файла output\_file.txt}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \captionsetup{justification=centering,margin=1cm}
+  \includegraphics{pictures/11}
+  \caption{Пример появления ошибок в процессе выполнения программы.}
 \end{figure}
 \clearpage
 
 \section{Вывод}
-В этой курсовой работе мною были продемонстрированы навыки работы с шаблонными и абстрактными классами, пример проектирования приложения с помощью паттерна "Шаблонный метод". Также был реализован интерфейс для односвязныйх списков с использованием паттерна "Декоратор" и продемонстрирована работа спроектированного приложения.
+Было разработано приложение для проведения лотереи и обработки соответствующих данных с использованием паттерна проектирования "Фабричный метод". Также в этом приложении был реализован интерфейс для односвязныйх списков forward_list и List с использованием паттерна "Декоратор" и продемонстрирована работа спроектированного приложения, симуляция проведения лотереи.
+Коллекции forward_list и List были протестированы на достаточно больших количествах хранящихся в них объектов (>20 000 000 штук). В ходе тестов не было обнаружено какой-либо временной и сложностной разницы между реализациями односвязного списка. Сложность реализации вставки и удаления у обоих реализаций имеет линеюную сложность O(n). Поиск элемента в коллекции односвязного списка также имеет линейную сложность.
 \newpage
 
 \section{Литература}
@@ -193,47 +242,38 @@
 #include <iostream>
 #include <fstream>
 #include <ctime>
-#include "generators.h"
 #include "client_code.h"
 
 using namespace std;
 
 int main()
 {
-    int err_code;                                                   // Замена errno.
     ofstream ofp("output_file.txt");
     if(!ofp.is_open())
     {
         err_code=1;
-        errCheck_Main(err_code, 0);
+        errCheck_Main();
     }
 
     srand(static_cast <unsigned>(time(nullptr)));
 
-    if(clientCode(ofp, err_code))
+    if(clientCode(ofp))
         err_code=2;
     ofp.close();
 
-    errCheck_Main(err_code, 0);
+    errCheck_Main();
 }
 
 \end{minted}
 \subsubsection{client\_code.h}
 \begin{minted}{C++}
-#ifndef FA_KURS_CLIENT_CODE_H
-#define FA_KURS_CLIENT_CODE_H
-
-#include <forward_list>
-
-#define LIST_IMPLEMENTATION forward_list
-#define BAD_ACCESS "You cannot access this operation: "
-
-int clientCode(ofstream &fp, int err_code)
+int clientCode(ofstream &fp)
 {
     SuperGenerator<FieldRusLot, LIST_IMPLEMENTATION> *super_gen = new SuperGeneratorRusLot<LIST_IMPLEMENTATION>();
-    Game<FieldRusLot, LIST_IMPLEMENTATION> *game=super_gen->gen_game->getGame(0, 3, 20000, 0.8, *super_gen->gen_lot,
-                                                                              *super_gen->gen_tic);
-    cout << "Available operations:\n"
+    Game<FieldRusLot, LIST_IMPLEMENTATION> *game=super_gen->gen_game->getGame(*super_gen->gen_lot, *super_gen->gen_tic);   // Пример ввода: 0, 2, 2000000, 0.8
+
+    cout << "Tickets were successfully generated.\n\n"
+            "Available operations:\n"
             "'p' - enter process mode and id of lot to process. In zero mode id is useless;\n"
             "'o' - print winners;\n"
             "'f' - write processed data to output_file;\n"
@@ -244,7 +284,7 @@ int clientCode(ofstream &fp, int err_code)
     bool proceed=true, p_not_blocked=true, s_not_blocked=false, o_f_not_blocked=false;
     while(proceed)
     {
-        cout << "\n\nEnter operation:\n";
+        cout << "\n\nEnter operation:\n";                               // Пример ввода: p 0 0
         cin >> operation;
         switch(operation)
         {
@@ -252,7 +292,7 @@ int clientCode(ofstream &fp, int err_code)
                 if(p_not_blocked)
                 {
                     cin >> process_mode >> number;
-                    while((err_code = game->processGame(process_mode, number, err_code)) == -1)
+                    while((err_code = game->processGame(process_mode, number)) == -1)
                         cin >> process_mode;
                     if(err_code)
                     {
@@ -278,7 +318,7 @@ int clientCode(ofstream &fp, int err_code)
                 {
                     fp << *game;
                     s_not_blocked=true;
-                    cout << "Done.\n";
+                    cout << "Processed data has been written to file.";
                 }
                 else
                     cout << BAD_ACCESS"Game has not been processed or processing has ended with errors.\n";
@@ -287,7 +327,7 @@ int clientCode(ofstream &fp, int err_code)
             case 's':
                 if(s_not_blocked)
                 {
-                    if(!searchTickets(*game, super_gen->gen_tic->getTicket(0, 0, -1), err_code))
+                    if(!searchTickets(*game, super_gen->gen_tic->getTicket(0, 0, -1)))       // Пример ввода: 0 432 -1
                         err_code=1;
                 }
                 else
@@ -304,16 +344,18 @@ int clientCode(ofstream &fp, int err_code)
     }
     delete super_gen; delete game;
 
-    return errCheck_ClientCode(err_code, 0);
+    return errCheck_ClientCode();
 }
-
-#endif
-
 \end{minted}
 \subsubsection{functions.h}
 \begin{minted}{C++}
-#ifndef FA_KURS_FUNCTIONS_H
-#define FA_KURS_FUNCTIONS_H
+int floatChanceToInt(float chance)
+{
+    chance*=100;
+    if(chance>100)
+        chance=rand() %100 +1;
+    return (int)chance;
+}
 
 int foundDuplicate(int8_t *arr, int i, int number)
 {
@@ -338,21 +380,15 @@ void getValues(int8_t arr[2][5])
     }
 }
 
-#endif
-
 \end{minted}
 \subsubsection{components.h}
 \begin{minted}{C++}
-#ifndef FA_KURS_COMPONENTS_H
-#define FA_KURS_COMPONENTS_H
-
 #include <algorithm>
 #include <vector>
 #include <cstdint>
 #include <random>
 #include <chrono>
 #include "list_decorator.h"
-#include "generators.h"
 #include "functions.h"
 
 #define NUMBER_OF_KEGS 90
@@ -369,9 +405,9 @@ class KegBag
 private:
     vector<unsigned int> bag;
 public:
-    KegBag()
+    KegBag(unsigned &seed)
     {
-        unsigned seed = chrono::system_clock::now().time_since_epoch().count() + rand();          // rand() прибавлен из-за того, что сид практически не меняется в единицу времени.
+        seed+=rand();                           // rand() прибавлен из-за того, что seed практически не меняется за время, достаточное для генерации нескольких билетов.
         for(int i=1; i<NUMBER_OF_KEGS; i++)
             bag.push_back(i);
         shuffle(bag.begin(), bag.end(), default_random_engine(seed));
@@ -398,17 +434,17 @@ public:
 class Field
 {
 protected:
-    unsigned int row_count;
-    unsigned int col_count;
+    unsigned long long row_count;
+    unsigned long long col_count;
     int8_t **field;
 public:
-    Field(unsigned int rows, unsigned int cols) : row_count(rows), col_count(cols)
+    Field(unsigned long long rows, unsigned long long cols) : row_count(rows), col_count(cols)
     {
-        unsigned int j;
+        unsigned long long j;
         int8_t field_values_in_row[2][5];
 
         field=new int8_t *[row_count];
-        for(unsigned int i=0; i<row_count; i++)
+        for(unsigned long long i=0; i<row_count; i++)
         {
             field[i]=new int8_t[col_count];
             for(j=0; j<col_count; j++)
@@ -467,10 +503,10 @@ template<class T>
 class Ticket
 {
 protected:
-    unsigned int lot_number, ticket_number, status;
+    unsigned long long lot_number, ticket_number, status;
     vector<T> fields;
 public:
-    Ticket(unsigned int lot_num, unsigned int ticket_num, unsigned int field_count, unsigned int status) :
+    Ticket(unsigned long long lot_num, unsigned long long ticket_num, unsigned int field_count, unsigned int status) :
             lot_number(lot_num), ticket_number(ticket_num),
             fields(field_count), status(status) {}
     ~Ticket()
@@ -532,7 +568,7 @@ public:
         }
         return 0;
     }
-    friend ostream& operator<< (ostream &out, Ticket<T> &tic)
+    friend ostream& operator<< (ostream &out, const Ticket<T> &tic)
     {
         out << "Lot series: " << tic.lot_number << '\n';
         out << "Ticket: " << tic.ticket_number << "\n";
@@ -598,14 +634,14 @@ public:
         }
         in.ignore(30, '\n');
     }
-    template <class C, template<class> class L> friend Ticket<C> *searchTickets(Game<C, L> &game, Ticket<C> *tic, int &err_code);
+    template <class C, template<class> class L> friend Ticket<C> *searchTickets(Game<C, L> &game, Ticket<C> *tic);
     template <class, template<class> class> friend class Lot;
 };
 
 class TicketRusLot : public Ticket<FieldRusLot>
 {
 public:
-    TicketRusLot(unsigned int lot_num, unsigned int ticket_num, unsigned int status) : Ticket(lot_num, ticket_num, 2, status) {}
+    TicketRusLot(unsigned long long lot_num, unsigned long long ticket_num, unsigned int status) : Ticket(lot_num, ticket_num, 2, status) {}
 };
 
 template <class T, template<class> class L>
@@ -613,25 +649,22 @@ class Lot
 {
 private:
     bool was_processed;
-    unsigned int lot_number;
+    unsigned long long lot_number;
     KegBag keg_bag;
     ListBasicInterface<L, Ticket<T>*> lot_tickets;
 public:
-    Lot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, GeneratorTicket<T> &gen) : was_processed(false), lot_number(num)
+    Lot(unsigned long long num, unsigned long long num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) : was_processed(false), lot_number(num),
+                                                                                                                            keg_bag(seed)
     {
-        if(rand()%2 || sale_chance==100)                                                           // Полная или неполная реализация тиража.
-            for(unsigned int i=0; i<num_of_tickets; i++)
-                lot_tickets.push_front(gen.getTicket(lot_number, i, 1));
-        else
-            for(unsigned int i = 0; i < num_of_tickets; i++)
-                lot_tickets.push_front(gen.getTicket(lot_number, i,(rand()%100)<sale_chance));
+        for(unsigned long long i=0; i<num_of_tickets; i++)
+            lot_tickets.push_front(gen.getTicket(lot_number, i,(rand()%100)<sale_chance));
     }
     ~Lot()
     {
         lot_tickets.clear();
     }
     template <class, template<class> class> friend class Game;
-    friend ostream& operator<< (ostream &out, Lot<T, L> &lot)
+    friend const ostream& operator<< (ostream &out, Lot<T, L> &lot)
     {
         for(auto it = lot.lot_tickets.begin(); it!=lot.lot_tickets.end(); it++)
             out << **it << '\n';
@@ -644,25 +677,72 @@ template <class T, template<class> class L>
 class Game
 {
 private:
-    unsigned int game_id;
-    unsigned int game_size;
+    unsigned seed;
+    unsigned long long id;
+    unsigned long long count_of_lots;
+    unsigned long long count_of_tickets;
     ListBasicInterface<L, Lot<T, L>*> lot_tickets;
     ListBasicInterface<L, Ticket<T>*> first_tour_winner_tickets;
     ListBasicInterface<L, Ticket<T>*> second_tour_winner_tickets;
     ListBasicInterface<L, Ticket<T>*> third_tour_winner_tickets;
 
-    Game(unsigned int id, unsigned int num_of_lot, unsigned int num_of_tic, float sale_chance, GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic)
-            : game_id(id), game_size(num_of_lot)
+    Game(GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic) : seed(chrono::system_clock::now().time_since_epoch().count())
     {
-        sale_chance*=100;
-        if(sale_chance<1 || sale_chance>100)
-            sale_chance=rand() %100 +1;
-
-        for(int i=0; i<game_size; i++)
-            lot_tickets.push_front(gen_lot.getLot(i, num_of_tic, sale_chance, gen_tic));
+        generationProceed(generationMenu(), gen_lot, gen_tic);      // Вызов меню для задания параметров генерации в качестве параметра для основной функции генерации
     }
 
-    void printWinners(ListBasicInterface<L, Ticket<T>*> &winner_tickets)
+    float generationMenu()
+    {
+        float sale_chance;
+        cout << "Available generation parameters:\n"
+                "Game id;\n"
+                "Number of lots;\n"
+                "Number of tickets in lot. Set this parameter to 0 if number of tickets in each lot should vary;\n"
+                "Ticket sale chance (float). Set this parameter to number less than 0 if sale chance for tickets in each lot should vary.\t\t   "
+                                            "Set this parameter to number greater than 1 to get random chance of sale for tickets in each lot.\n\n"
+                "Enter parameters:\n";
+        cin >> id >> count_of_lots >> count_of_tickets >> sale_chance;
+        return sale_chance;
+    }
+    void generationProceed(float sale_chance, GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic)
+    {
+        if(!count_of_tickets && (sale_chance<0))                                // Не хочется еще больше плодить сущностей и делать отдельную функцию.
+        {
+            unsigned long long num;
+            for(int i=0; i<count_of_lots; i++)
+            {
+                cout << "Enter number of tickets and/or sale chance:\n";
+                cin >> num >> sale_chance;
+                lot_tickets.push_front(gen_lot.getLot(i, num, floatChanceToInt(sale_chance), seed, gen_tic));
+            }
+        }
+        else if(!count_of_tickets)
+        {
+            unsigned long long num;
+            for(int i=0; i<count_of_lots; i++)
+            {
+                cout << "Enter number of tickets and/or sale chance:\n";
+                cin >> num;
+                lot_tickets.push_front(gen_lot.getLot(i, count_of_tickets, sale_chance, seed, gen_tic));
+            }
+        }
+        else if(sale_chance<0)
+        {
+            for(int i=0; i<count_of_lots; i++)
+            {
+                cout << "Enter number of tickets and/or sale chance:\n";
+                cin >> sale_chance;
+                lot_tickets.push_front(gen_lot.getLot(i, count_of_tickets, floatChanceToInt(sale_chance), seed, gen_tic));
+            }
+        }
+        else
+        {
+            sale_chance = floatChanceToInt(sale_chance);
+            for (int i = 0; i < count_of_lots; i++)
+                lot_tickets.push_front(gen_lot.getLot(i, count_of_tickets, sale_chance, seed, gen_tic));
+        }
+    }
+    void printWinners(ListBasicInterface<L, Ticket<T>*> &winner_tickets) const
     {
         if(winner_tickets.empty())
         {
@@ -674,12 +754,12 @@ private:
     }
     int processTour(unsigned int n, auto &lot, ListBasicInterface<L, Ticket<T>*> &tour_winner_tickets, int victory_type, vector<unsigned int> &kegs)
     {
-        for(int i=0; i<n; i++)
+        for(int i=0; i<n; i++)                                       // Определение победителей происходит как по условию - после каждого хода.
         {
             (*lot)->keg_bag.getKegs(kegs, 1);
-            for (auto tic : (*lot)->lot_tickets)
-                if (tic->getStatus() == 1)
-                    if (tic->processTicket(kegs, victory_type))
+            for(auto tic : (*lot)->lot_tickets)
+                if(tic->getStatus() == 1)
+                    if(tic->processTicket(kegs, victory_type))
                         tour_winner_tickets.push_front(tic);
         }
     }
@@ -717,7 +797,7 @@ public:
         for(auto tic : (*lot)->lot_tickets)
             if(tic->getStatus()==1)
                 tic->processTicket(kegs, 1);
-        processTour(10, lot, first_tour_winner_tickets, 1, kegs);           // Первый параметр - количество вынимаемых бочонков в туре.
+        processTour(10, lot, first_tour_winner_tickets, 1, kegs);               // Первый параметр - количество вынимаемых бочонков в туре.
         cout << "Processing second tour...\n";
         processTour(30, lot, second_tour_winner_tickets, 2, kegs);
         cout << "Processing third tour...\n";
@@ -728,18 +808,18 @@ public:
 
         return 0;
     }
-    int processGame(int process_mode, unsigned int number, int &err_code)
+    int processGame(int process_mode, unsigned long long number)
     {
         switch(process_mode)
         {
             case 0:
-                for(auto lot = lot_tickets.begin(); lot != lot_tickets.end(); lot++)
+                for(auto lot=lot_tickets.begin(); lot!=lot_tickets.end(); lot++)
                     if((err_code=processLot((*lot)->lot_number, lot)))
-                        errCheck_Components(err_code, (*lot)->lot_number);
+                        errCheck_Components((*lot)->lot_number);
                 break;
             case 1:
                 if((err_code=processLot(number, lot_tickets.end())))
-                    errCheck_Components(err_code, number);
+                    errCheck_Components(number);
                 break;
             default:
                 cout << "\nNo such mode, try again.";
@@ -758,9 +838,9 @@ public:
     }
 
     template <class, template<class> class> friend class GeneratorGameRusLot;
-    friend ostream& operator<< (ostream &out, Game<T, L> &game)
+    friend const ostream& operator<< (ostream &out, Game<T, L> &game)
     {
-        out << "Game ID: " << game.game_id << "\n\n";
+        out << "Game ID: " << game.id << "\n\n";
         for(auto it=game.lot_tickets.begin(); it!=game.lot_tickets.end(); it++)
             out << **it;
         return out;
@@ -768,24 +848,26 @@ public:
 };
 
 template <class C, template<class> class L>
-Ticket<C> *searchTickets(Game<C, L> &game, Ticket<C> *tic, int &err_code)           // По обработке ошибок ипринципу работы (не в бесконечном цикле) предполагается, что функция
-                                                                                    // должна использоваться для работы с компонентами, не для пользователя.
+Ticket<C> *searchTickets(Game<C, L> &game, Ticket<C> *tic)           // Функция может быть также использована при работе с компонентами, так как возвращает указатель типа Ticket.
 {
     ifstream fp("output_file.txt");
     if(!fp.is_open())
     {
         err_code=1;
-        errCheck_Main(err_code, 0);
+        errCheck_Main();
     }
     fp.ignore(10,'\n');                                                    // Пропуск Game id.
     fp.get();
 
-    int criteria[3], initial_value=0, count_of_matching;
-    cout << "\nEnter lot number, ticket number, status to find ticket.\n"
-            "If you enter a negative number for criteria, this criteria will not be taken into consideration when searching."
-            "\nIn that case first matching ticket will be returned.\n";
+    long long criteria[3], initial_value=0, count_of_matching;
+    cout << "\nAvailable searching parameters:\n"
+            "Lot number;\n"
+            "Ticket number;\n"
+            "Ticket status.\n"
+            "If you enter a negative number for criteria, this criteria will not be taken into consideration when searching. "
+            "In that case first matching ticket will be returned.\n";
     cin >> criteria[0] >> criteria[1] >> criteria[2];
-    for(int i : criteria)
+    for(long long i : criteria)
         if(i<0)
             initial_value++;
     do
@@ -811,29 +893,20 @@ Ticket<C> *searchTickets(Game<C, L> &game, Ticket<C> *tic, int &err_code)       
     cout << "Ticket not found.\n";
     return nullptr;
 }
-#endif
-
 \end{minted}
 \subsubsection{generators.h}
 \begin{minted}{C++}
-#ifndef FA_KURS_GENERATORS_H
-#define FA_KURS_GENERATORS_H
-
-#include "error_check.h"
-#include "components.h"
-
 template<class T>
 class GeneratorTicket
 {
 public:
-    virtual Ticket<T> *getTicket(unsigned int lot_num, unsigned int ticket_num, unsigned int status) const = 0;
-    template <class, template<class> class> friend class Lot;
+    virtual Ticket<T> *getTicket(unsigned long long lot_num, unsigned long long ticket_num, unsigned int status) const = 0;
 };
 
 class GeneratorTicketRusLot : public GeneratorTicket<FieldRusLot>
 {
 public:
-    Ticket<FieldRusLot> *getTicket(unsigned int lot_num, unsigned int ticket_num, unsigned int status) const override
+    Ticket<FieldRusLot> *getTicket(unsigned long long lot_num, unsigned long long ticket_num, unsigned int status) const override
     {
         return new TicketRusLot(lot_num, ticket_num, status);
     }
@@ -843,16 +916,16 @@ template <class T, template<class> class L>
 class GeneratorLot
 {
 public:
-    virtual Lot<T, L> *getLot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, GeneratorTicket<T> &gen) const=0;
+    virtual Lot<T, L> *getLot(unsigned long long num, unsigned long long num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) const = 0;
 };
 
 template <class T, template<class> class L>
 class GeneratorLotRusLot : public GeneratorLot<FieldRusLot, L>
 {
 public:
-    Lot<FieldRusLot, L> *getLot(unsigned int num, unsigned int num_of_tickets, unsigned int sale_chance, GeneratorTicket<T> &gen) const override
+    Lot<FieldRusLot, L> *getLot(unsigned long long num, unsigned long long num_of_tickets, unsigned int sale_chance, unsigned &seed, GeneratorTicket<T> &gen) const override
     {
-        return new Lot<FieldRusLot, L>(num, num_of_tickets, sale_chance, gen);
+        return new Lot<FieldRusLot, L>(num, num_of_tickets, sale_chance, seed, gen);
     }
 };
 
@@ -860,18 +933,16 @@ template <class T, template<class> class L>
 class GeneratorGame
 {
 public:
-    virtual Game<T, L> *getGame(unsigned int id, unsigned int num_of_lot, unsigned int num_of_tic, float sale_chance,
-                                GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic) const=0;
+    virtual Game<T, L> *getGame(GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic) const = 0;
 };
 
 template <class T, template<class> class L>
 class GeneratorGameRusLot : public GeneratorGame<FieldRusLot, L>
 {
 public:
-    Game<FieldRusLot, L> *getGame(unsigned int id, unsigned int num_of_lot, unsigned int num_of_tic, float sale_chance,
-                                  GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic) const override
+    Game<FieldRusLot, L> *getGame(GeneratorLot<T, L> &gen_lot, GeneratorTicket<T> &gen_tic) const override
     {
-        return new Game<FieldRusLot, L>(id, num_of_lot, num_of_tic, sale_chance, gen_lot, gen_tic);
+        return new Game<FieldRusLot, L>(gen_lot, gen_tic);
     };
 };
 
@@ -899,20 +970,17 @@ public:
     SuperGeneratorRusLot() : SuperGenerator<FieldRusLot, L>::SuperGenerator(new GeneratorGameRusLot<FieldRusLot, L>(), new GeneratorLotRusLot<FieldRusLot, L>(),
                                                                             new GeneratorTicketRusLot()) {}
 };
-
-#endif
 \end{minted}
 \subsubsection{error\_check.h}
 \begin{minted}{C++}
-#ifndef FA_KURS_ERROR_CHECK_H
-#define FA_KURS_ERROR_CHECK_H
-
 #define NON_CRITICAL "\nNON CRITICAL: "
 #define CRITICAL     "\nCRITICAL: "
 
 using namespace std;
 
-int errCheck_Components(int err_code, unsigned int additional_information)          // Можно было упаковать в классы, но, по-моему, лучше так.
+static int err_code;            // Замена errno.
+
+int errCheck_Components(unsigned int additional_information)          // Можно было упаковать в классы, но, по-моему, лучше так.
 {
     switch(err_code)
     {
@@ -925,7 +993,7 @@ int errCheck_Components(int err_code, unsigned int additional_information)      
     }
 }
 
-int errCheck_ClientCode(int err_code, long int additional_information)
+int errCheck_ClientCode()
 {
     switch(err_code)
     {
@@ -941,29 +1009,23 @@ int errCheck_ClientCode(int err_code, long int additional_information)
     return 0;
 }
 
-int errCheck_Main(int err_code, long int additional_information)
+void errCheck_Main()
 {
     switch(err_code)
     {
+        case 0:
+            exit(0);
         case 1:
-            cerr << CRITICAL"Failed to open output file.";              // Обьекты, наследуемые от класса исключений, не используются.
+            cerr << CRITICAL"Failed to open output file.";          // Обьекты, наследуемые от класса исключений, при критических ошибках не используются.
             exit(1);
         case 2:
             cerr << NON_CRITICAL"Program has ended with some errors.";
             exit(2);
-        default:
-            exit(0);
     }
 }
-
-#endif
-
 \end{minted}
 \subsubsection{list\_decorator.h}
 \begin{minted}{C++}
-#ifndef FA_KURS_LIST_DECORATOR_H
-#define FA_KURS_LIST_DECORATOR_H
-
 template <class T>
 struct Node
 {
@@ -987,7 +1049,7 @@ public:
     {
         return (head==nullptr);
     }
-    void push_front(T data)
+    void push_front(const T &data)
     {
         temp = new Node<T>;
         temp->data = data;
@@ -997,22 +1059,14 @@ public:
             temp->next = head;
         head = temp;
     }
-    bool pop_front(T data)
+    void pop_front()
     {
-        temp = head;
-        Node<T> *prev;
-        while(temp->next != nullptr && temp->data != data)
+        if(!empty())
         {
-            prev = temp;
-            temp = temp->next;
+            Node<T> *tmp=head;
+            head=head->next;
+            delete tmp;
         }
-        if(temp->data == data)
-        {
-            prev->next = temp->next;
-            delete temp;
-            return true;
-        }
-        return false;
     }
     void clear()
     {
@@ -1029,8 +1083,8 @@ public:
         const Node<T>* current;
     public:
         iterator() : current(nullptr) {}
+        iterator(const Node<T>* p_node) : current(p_node) {}
 
-        iterator(const Node<T>* pNode) noexcept : current(pNode) {}
         iterator& operator=(Node<T>* node)
         {
             this->current = node;
@@ -1048,15 +1102,15 @@ public:
             ++*this;
             return iterator;
         }
-        bool operator==(const iterator& it)
+        bool operator==(const iterator& it) const
         {
             return current == it.current;
         }
-        bool operator!=(const iterator& it)
+        bool operator!=(const iterator& it) const
         {
             return current != it.current;
         }
-        T operator*()
+        T operator*() const
         {
             return current->data;
         }
@@ -1103,8 +1157,6 @@ public:
         lst.clear();
     }
 };
-
-#endif
 \end{minted}
 \cite{knuth-fa}
 \cite{knuth-acp}
