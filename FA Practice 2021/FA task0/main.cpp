@@ -4,7 +4,7 @@
 
 using namespace std;
 
-bool zeroCheck(uint16_t divider)
+bool isZero(uint16_t divider)
 {
     if(divider==0)
     {
@@ -13,7 +13,7 @@ bool zeroCheck(uint16_t divider)
     }
     return false;
 }
-bool oddCheck(uint16_t elem)
+bool isOdd(uint16_t elem)
 {
     uint8_t count=0;
 
@@ -31,7 +31,7 @@ uint8_t getDegree(uint16_t elem)
 }
 uint16_t mod(uint16_t res, uint8_t divider, uint8_t deg_mod)
 {
-    if(zeroCheck(divider))
+    if(isZero(divider))
         return 0;
     for(int i=sizeof(res)*8-1; i>0; i--)
     {
@@ -70,7 +70,7 @@ public:
     }
     uint8_t multiply(uint8_t elem_a, uint8_t elem_b, uint16_t modulo)
     {
-        if(zeroCheck(modulo))
+        if(isZero(modulo))
             return 0;
         uint8_t deg_initial_res, deg_mod, res=0;
         uint16_t initial_res = 0;
@@ -129,7 +129,7 @@ public:
                     break;
                 if(deg_mod==power)
                 {
-                    if(oddCheck(poly))
+                    if(isOdd(poly))
                         irreducibles.push_back(poly);
                     break;
                 }
