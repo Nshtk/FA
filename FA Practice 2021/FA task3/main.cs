@@ -34,7 +34,7 @@ namespace Practice_Cs3
             TryDelete();
 
             if (memory.ContainsKey(key))
-                throw new ArgumentException($"Key {key} is already used.");
+                throw new ArgumentException();
 
             if (memory.Count < max_size)
                 memory.Add(key, new Tuple<T, DateTime>(data, DateTime.Now));
@@ -69,13 +69,24 @@ namespace Practice_Cs3
     {
         static void Main(string[] args)
         {
-            Cache<int> cache = new Cache<int>(3, TimeSpan.FromSeconds(15));
+            try
+            {
+                Cache<int> cache = new Cache<int>(3, TimeSpan.FromSeconds(15));
 
-            cache.Save("entry_one", 1);
-            cache.Save("entry_two", 2);
-            cache.Save("entry_three", 3);
+                cache.Save("entry_one", 1);
+                cache.Save("entry_two", 2);
+                cache.Save("entry_three", 3);
 
-            Console.WriteLine("Data: {0}", cache.Get("entry_two"));
+                Console.WriteLine("Data: {0}", cache.Get("entry_two"));
+            }
+            catch(KeyNotFoundException e)
+            {
+                Console.WriteLine("Key not found.");
+            }
+            catch (ArgumentException e)
+            {
+                Console.WriteLine("Key is already used.");
+            }
         }
     }
 }

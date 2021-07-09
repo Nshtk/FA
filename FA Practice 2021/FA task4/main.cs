@@ -181,11 +181,18 @@ namespace Practice_4
         };
         static void Main(string[] args)
         {
-            using (var Explorer = new Explorer())
+            try
             {
-                Explorer.GetFiles(args[1], isNumber, null);
-                Explorer.GetFiles(args[2], isGroup, isStudent);
-                Explorer.CreateOutput(args[3]);
+                using (var Explorer = new Explorer())
+                {
+                    Explorer.GetFiles(args[1], isNumber, null);
+                    Explorer.GetFiles(args[2], isGroup, isStudent);
+                    Explorer.CreateOutput(args[3]);
+                }
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.WriteLine("File not found");
             }
         }
     }

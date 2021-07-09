@@ -10,7 +10,7 @@ namespace Practice_Cs1
         {
             IEnumerable<string> unique_str_array = str_array.Distinct(comperor);
             if (unique_str_array== str_array)                                               // Через Count сделать не получилось
-                throw new ArgumentException(String.Format("Repeatables were found."));
+                throw new ArgumentException();
         }
 
         public static IEnumerable<IEnumerable<string>> GetCombinationsList(this IEnumerable<string> str_array, int k, in IEqualityComparer<string> comperor)
@@ -134,14 +134,23 @@ namespace Practice_Cs1
             IEnumerable<IEnumerable<string>> objects_third = new List<List<string>>();
 
             List<string> data = new List<string>(new string[] { "1", "2", "3"});
-            objects_first = data.GetCombinationsList(3, in comp);
-            PrintMyCollectionList(in objects_first, "Combinations:");
 
-            objects_second = data.GetSubsetsList(in comp);
-            PrintMyCollectionList(in objects_second, "Subsets:");
+            try
+            {
+                objects_first = data.GetCombinationsList(3, in comp);
+                PrintMyCollectionList(in objects_first, "Combinations:");
 
-            objects_third = data.GetPermutationsList(in comp);
-            PrintMyCollectionList(in objects_third, "Permutations:");
+                objects_second = data.GetSubsetsList(in comp);
+                PrintMyCollectionList(in objects_second, "Subsets:");
+
+                objects_third = data.GetPermutationsList(in comp);
+                PrintMyCollectionList(in objects_third, "Permutations:");
+            }
+            catch (ArgumentException e)
+            {
+                Console.WriteLine("Repeatables were found");
+            }
+            
         }
     }
 }
